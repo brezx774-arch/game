@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { BoardTile } from '../types';
 import { BOARD_TILES } from '../utils/boardData';
 import { motion, AnimatePresence } from 'motion/react';
@@ -71,6 +71,24 @@ export const CricketBoard: React.FC<CricketBoardProps> = ({
 
   const currentTile = BOARD_TILES[currentTileIndex] || BOARD_TILES[0];
 
+  const [showBoundaryAnim, setShowBoundaryAnim] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isRolling) {
+      if (currentTile.type === 'RUN_4') {
+        setShowBoundaryAnim('4');
+        const t = setTimeout(() => setShowBoundaryAnim(null), 2500);
+        return () => clearTimeout(t);
+      } else if (currentTile.type === 'RUN_6' || currentTile.type === 'POWER_SHOT') {
+        setShowBoundaryAnim('6');
+        const t = setTimeout(() => setShowBoundaryAnim(null), 2500);
+        return () => clearTimeout(t);
+      }
+    } else {
+      setShowBoundaryAnim(null);
+    }
+  }, [isRolling, currentTile]);
+
   return (
     <div id="board-container" className="relative w-full max-w-[500px] aspect-square mx-auto my-2 flex items-center justify-center p-2 select-none perspective-[1200px]">
       
@@ -128,6 +146,32 @@ export const CricketBoard: React.FC<CricketBoardProps> = ({
              {/* Pitch Texture */}
              <div className="absolute inset-0 opacity-30 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPHBhdGggZD0iTTAgMEgxdjFIMHoiIGZpbGw9IiM4YjVhMmIiIGZpbGwtb3BhY2l0eT0iMC41Ii8+Cjwvc3ZnPg==')]" />
             
+             {/* Boundary Animation Overlay */}
+             <AnimatePresence>
+               {showBoundaryAnim && (
+                 <motion.div
+                   key="boundary-anim"
+                   initial={{ scale: 0, opacity: 0, y: 50, rotateX: 30 }}
+                   animate={{ scale: [0, 1.8, 1.4], opacity: 1, y: -20, rotateX: 0 }}
+                   exit={{ opacity: 0, scale: 2, y: -60 }}
+                   transition={{ duration: 1.5, times: [0, 0.4, 1], ease: "easeOut" }}
+                   className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none"
+                 >
+                    <div className="relative">
+                      {/* Exploding starburst behind text */}
+                      <motion.div 
+                        animate={{ rotate: 180, scale: [0.5, 1.2, 1.5], opacity: [1, 0] }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-[radial-gradient(circle,rgba(255,255,255,1)_0%,rgba(251,191,36,0)_70%)] mix-blend-overlay"
+                      />
+                      <span className="text-5xl sm:text-7xl font-black italic text-transparent bg-clip-text bg-gradient-to-tr from-[#facc15] to-[#fef08a] drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] tracking-tighter" style={{ WebkitTextStroke: '2px #000' }}>
+                        {showBoundaryAnim === '4' ? 'FOUR!' : 'SIX!'}
+                      </span>
+                    </div>
+                 </motion.div>
+               )}
+             </AnimatePresence>
+
              {/* Top Crease */}
              <div className="relative w-full px-2 flex flex-col items-center">
                <div className="w-full h-[2px] bg-white/90 shadow-[0_0_2px_rgba(255,255,255,0.8)]" />
@@ -258,7 +302,7 @@ export const CricketBoard: React.FC<CricketBoardProps> = ({
              className="relative"
           >
             {/* Built with DOM elements for a pure CSS cartoon character look */}
-            <div className="relative w-10 h-14 drop-shadow-[0_4px_6px_rgba(0,0,0,0.4)]">
+            <div className="relative w-10 h-14 drop-shadow-[0_4px_6px_rgba(0,0,0,0.4)] scale-[0.55] sm:scale-[0.65] origin-bottom">
               {/* Helmet */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-7 bg-blue-600 rounded-t-full border-2 border-blue-800 z-20 overflow-hidden">
                 <div className="absolute top-1 right-1 w-2 h-1 bg-white/40 rounded-full rotate-45" />

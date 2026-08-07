@@ -10,6 +10,7 @@ interface MatchEndModalProps {
   aiState: PlayerState;
   targetRuns?: number;
   onPlayAgain: () => void;
+  onExitToLobby?: () => void;
 }
 
 export const MatchEndModal: React.FC<MatchEndModalProps> = ({
@@ -18,6 +19,7 @@ export const MatchEndModal: React.FC<MatchEndModalProps> = ({
   aiState,
   targetRuns = 0,
   onPlayAgain,
+  onExitToLobby,
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -63,6 +65,25 @@ export const MatchEndModal: React.FC<MatchEndModalProps> = ({
           Match Completed • T20 Board Showdown
         </p>
 
+        {/* Rewards Banner */}
+        <div className="bg-[#1e293b] border-2 border-[#334155] rounded-xl p-3 flex justify-center gap-6 mb-5 shadow-inner">
+           <div className="flex flex-col items-center">
+             <span className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-1">Match Bonus</span>
+             <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-full border border-white/10">
+               <span className="text-lg font-black text-[#facc15]">{userWon ? '+150' : '+50'}</span>
+               <Trophy className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+             </div>
+           </div>
+           
+           <div className="flex flex-col items-center">
+             <span className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-1">XP Earned</span>
+             <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-full border border-white/10">
+               <span className="text-lg font-black text-[#38bdf8]">{userWon ? '+200' : '+50'}</span>
+               <Award className="w-4 h-4 text-sky-400 fill-sky-400" />
+             </div>
+           </div>
+        </div>
+
         {/* Score Breakdown Cards */}
         <div className="grid grid-cols-2 gap-3 mb-5">
           {/* YOU Scorecard */}
@@ -105,16 +126,30 @@ export const MatchEndModal: React.FC<MatchEndModalProps> = ({
         </div>
 
         {/* Play Again Button */}
-        <button
-          onClick={() => {
-            soundFx.playClick();
-            onPlayAgain();
-          }}
-          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-stone-950 font-black text-sm uppercase tracking-wider shadow-lg hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <RotateCcw className="w-5 h-5" />
-          <span>PLAY AGAIN</span>
-        </button>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => {
+              soundFx.playClick();
+              onPlayAgain();
+            }}
+            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-stone-950 font-black text-sm uppercase tracking-wider shadow-lg hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <RotateCcw className="w-5 h-5" />
+            <span>PLAY AGAIN</span>
+          </button>
+
+          {onExitToLobby && (
+            <button
+              onClick={() => {
+                soundFx.playClick();
+                onExitToLobby();
+              }}
+              className="w-full py-3 rounded-2xl bg-stone-800 border-2 border-stone-700 text-stone-300 font-black text-xs uppercase tracking-wider hover:bg-stone-700 active:scale-98 transition-all flex items-center justify-center cursor-pointer"
+            >
+              <span>EXIT TO LOBBY</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

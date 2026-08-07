@@ -9,6 +9,7 @@ interface SettingsDrawerProps {
   settings: GameSettings;
   onUpdateSettings: (newSettings: Partial<GameSettings>) => void;
   onRestartMatch: () => void;
+  onExitToLobby?: () => void;
 }
 
 export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
@@ -17,6 +18,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   settings,
   onUpdateSettings,
   onRestartMatch,
+  onExitToLobby,
 }) => {
   if (!isOpen) return null;
 
@@ -159,6 +161,18 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
         {/* Footer Actions */}
         <div className="pt-4 border-t border-stone-800 space-y-2">
+          {onExitToLobby && (
+            <button
+              onClick={() => {
+                soundFx.playClick();
+                onExitToLobby();
+                onClose();
+              }}
+              className="w-full py-3 rounded-xl bg-stone-800 border border-stone-700 text-stone-200 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-stone-700 transition-colors cursor-pointer active:scale-98"
+            >
+              <span>Exit to Lobby</span>
+            </button>
+          )}
           <button
             onClick={() => {
               soundFx.playClick();

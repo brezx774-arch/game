@@ -25,6 +25,7 @@ import { DiceModal } from './components/DiceModal';
 import { RulesModal } from './components/RulesModal';
 import { SettingsDrawer } from './components/SettingsDrawer';
 import { MatchEndModal } from './components/MatchEndModal';
+import { LobbyScreen } from './components/LobbyScreen';
 
 export default function App() {
   // Settings
@@ -75,6 +76,7 @@ export default function App() {
   });
 
   // Game Engine State
+  const [activeScreen, setActiveScreen] = useState<'LOBBY' | 'GAME'>('LOBBY');
   const [currentStrike, setCurrentStrike] = useState<'YOU' | 'AI'>('YOU');
   const [phase, setPhase] = useState<GamePhase>('INNINGS_1');
   const [targetRuns, setTargetRuns] = useState<number | undefined>(undefined);
@@ -91,6 +93,31 @@ export default function App() {
   // Commentary text
   const [commentaryMsg, setCommentaryMsg] = useState<string>('You worked away for one.');
   const [commentarySubMsg, setCommentarySubMsg] = useState<string>('Powerplay doubles it!');
+
+  // Player Profile State (Persistent)
+  const [coins, setCoins] = useState<number>(() => {
+    return parseInt(localStorage.getItem('cricket_coins') || '150', 10);
+  });
+  const [xp, setXp] = useState<number>(() => {
+    return parseInt(localStorage.getItem('cricket_xp') || '450', 10);
+  });
+  const [stats, setStats] = useState(() => {
+    const saved = localStorage.getItem('cricket_stats');
+    return saved ? JSON.parse(saved) : { matchesPlayed: 0, matchesWon: 0, totalRuns: 0, totalWickets: 0, highestScore: 0 };
+  });
+
+  // Persist Profile
+  useEffect(() => {
+    localStorage.setItem('cricket_coins', coins.toString());
+    localStorage.setItem('cricket_xp', xp.toString());
+    localStorage.setItem('cricket_stats', JSON.stringify(stats));
+  }, [coins, xp, stats]);
+
+  // Calculate Level from XP
+  const playerLevel = Math.floor(Math.sqrt(xp / 100)) + 1;
+  const xpForNextLevel = Math.pow(playerLevel, 2) * 100;
+  const xpForCurrentLevel = Math.pow(playerLevel - 1, 2) * 100;
+  const xpProgress = ((xp - xpForCurrentLevel) / (xpForNextLevel - xpForCurrentLevel)) * 100;
 
   // Sync Mute state
   const handleToggleMute = () => {
@@ -338,6 +365,30 @@ export default function App() {
     commentary: string,
     subCommentary?: string
   ) => {
+    
+    // Rewards System
+    if (phase !== 'MATCH_OVER') {
+      if (isUser) {
+        // User Batting Rewards
+        if (runs >= 4) {
+          setCoins(c => c + runs * 2);
+          setXp(x => x + 10);
+        } else if (runs > 0) {
+          setCoins(c => c + runs);
+          setXp(x => x + 2);
+        }
+      } else if (settings.mode === 'VS_AI') {
+        // User Bowling Rewards (AI is batting)
+        if (isWicket) {
+          setCoins(c => c + 25);
+          setXp(x => x + 30);
+        } else if (runs === 0 && !isWide) {
+          setCoins(c => c + 2);
+          setXp(x => x + 5);
+        }
+      }
+    }
+
     const updateFn = isUser ? setYouState : setAiState;
 
     updateFn((prev) => {
@@ -385,10 +436,43 @@ export default function App() {
         if (newRuns >= (targetRuns || 0)) {
           setTimeout(() => {
             setPhase('MATCH_OVER');
+            const userWon = isUser;
+            if (userWon) {
+              setCoins(c => c + 150); // Win bonus
+              setXp(x => x + 200);
+            } else {
+              setCoins(c => c + 50); // Loss consolation
+              setXp(x => x + 50);
+            }
+            setStats(s => ({
+              ...s,
+              matchesPlayed: s.matchesPlayed + 1,
+              matchesWon: s.matchesWon + (userWon ? 1 : 0),
+              totalRuns: s.totalRuns + (isUser ? newRuns : youState.runs),
+              totalWickets: s.totalWickets + (isUser ? newWickets : youState.wickets),
+              highestScore: Math.max(s.highestScore, isUser ? newRuns : youState.runs)
+            }));
           }, 1000);
         } else if (isInningsFinished) {
           setTimeout(() => {
             setPhase('MATCH_OVER');
+            const userWon = !isUser;
+            if (userWon) {
+              // User defended successfully
+              setCoins(c => c + 150); // Win bonus
+              setXp(x => x + 200);
+            } else {
+              setCoins(c => c + 50); // Loss consolation
+              setXp(x => x + 50);
+            }
+            setStats(s => ({
+              ...s,
+              matchesPlayed: s.matchesPlayed + 1,
+              matchesWon: s.matchesWon + (userWon ? 1 : 0),
+              totalRuns: s.totalRuns + (isUser ? newRuns : youState.runs),
+              totalWickets: s.totalWickets + (isUser ? newWickets : youState.wickets),
+              highestScore: Math.max(s.highestScore, isUser ? newRuns : youState.runs)
+            }));
           }, 1000);
         }
       }
@@ -427,54 +511,73 @@ export default function App() {
       {/* Background Stadium Glow & Vignette */}
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-950/20 via-stone-950 to-black pointer-events-none" />
 
-      {/* Main Container */}
-      <div className="relative z-10 flex-1 flex flex-col justify-between w-full max-w-2xl mx-auto pb-4">
-        {/* Header */}
-        <Header
-          onOpenMenu={() => setIsMenuOpen(true)}
+      {activeScreen === 'LOBBY' ? (
+        <LobbyScreen 
+          onStart={() => {
+            handleRestartMatch();
+            setActiveScreen('GAME');
+          }}
           onOpenSettings={() => setIsSettingsOpen(true)}
-          onOpenRules={() => setIsRulesOpen(true)}
-          isMuted={!settings.soundEnabled}
-          onToggleMute={handleToggleMute}
+          coins={coins}
+          playerLevel={playerLevel}
+          xpProgress={xpProgress}
+          stats={stats}
         />
+      ) : (
+        <div className="relative z-10 flex-1 flex flex-col justify-between w-full max-w-2xl mx-auto pb-4">
+          {/* Header */}
+          <Header
+            onOpenMenu={() => {
+               setIsMenuOpen(true);
+               // Add exit to lobby option in settings/menu in future, or let header handle it
+            }}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenRules={() => setIsRulesOpen(true)}
+            isMuted={!settings.soundEnabled}
+            onToggleMute={handleToggleMute}
+            coins={coins}
+            playerLevel={playerLevel}
+            xpProgress={xpProgress}
+          />
 
-        {/* Scoreboard */}
-        <Scoreboard
-          youState={youState}
-          aiState={aiState}
-          currentStrike={currentStrike}
-          phase={phase}
-          maxOvers={settings.maxOvers}
-          isPowerplay={isCurrentPowerplay}
-          targetRuns={targetRuns}
-        />
+          {/* Scoreboard */}
+          <Scoreboard
+            youState={youState}
+            aiState={aiState}
+            currentStrike={currentStrike}
+            phase={phase}
+            maxOvers={settings.maxOvers}
+            isPowerplay={isCurrentPowerplay}
+            targetRuns={targetRuns}
+          />
 
-        {/* Center Circular Cricket Board */}
-        <CricketBoard
-          currentTileIndex={currentTileIndex}
-          isRolling={isRolling}
-        />
+          {/* Center Circular Cricket Board */}
+          <CricketBoard
+            currentTileIndex={currentTileIndex}
+            isRolling={isRolling}
+          />
 
-        {/* Commentary Event Banner */}
-        <CommentaryBanner
-          message={commentaryMsg}
-          subMessage={commentarySubMsg}
-          isPowerplay={isCurrentPowerplay}
-          isWicket={commentaryMsg.includes('OUT')}
-        />
+          {/* Commentary Event Banner */}
+          <CommentaryBanner
+            message={commentaryMsg}
+            subMessage={commentarySubMsg}
+            isPowerplay={isCurrentPowerplay}
+            isWicket={commentaryMsg.includes('OUT')}
+          />
 
-        {/* Ball-by-Ball Overs History */}
-        <OversHistory history={activePlayer.history} />
+          {/* Ball-by-Ball Overs History */}
+          <OversHistory history={activePlayer.history} />
 
-        {/* Action Controls (Defend, Rotate, Attack, ROLL) */}
-        <ActionControls
-          selectedTactic={selectedTactic}
-          onSelectTactic={setSelectedTactic}
-          onRoll={handleRoll}
-          isRolling={isRolling}
-          disabled={phase === 'MATCH_OVER' || (currentStrike === 'AI' && settings.mode === 'VS_AI')}
-        />
-      </div>
+          {/* Action Controls (Defend, Rotate, Attack, ROLL) */}
+          <ActionControls
+            selectedTactic={selectedTactic}
+            onSelectTactic={setSelectedTactic}
+            onRoll={handleRoll}
+            isRolling={isRolling}
+            disabled={phase === 'MATCH_OVER' || (currentStrike === 'AI' && settings.mode === 'VS_AI')}
+          />
+        </div>
+      )}
 
       {/* Animated Roll Modal Overlay */}
       <DiceModal
@@ -500,6 +603,7 @@ export default function App() {
         settings={settings}
         onUpdateSettings={(newSet) => setSettings((prev) => ({ ...prev, ...newSet }))}
         onRestartMatch={handleRestartMatch}
+        onExitToLobby={() => setActiveScreen('LOBBY')}
       />
 
       {/* Match End Summary Modal */}
@@ -509,6 +613,7 @@ export default function App() {
         aiState={aiState}
         targetRuns={targetRuns}
         onPlayAgain={handleRestartMatch}
+        onExitToLobby={() => setActiveScreen('LOBBY')}
       />
     </div>
   );
