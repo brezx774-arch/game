@@ -11,6 +11,7 @@ import {
   PlayerState,
   GamePhase,
   GameSettings,
+  Ground,
 } from './types';
 import { BOARD_TILES } from './utils/boardData';
 import { soundFx } from './utils/audio';
@@ -26,6 +27,54 @@ import { RulesModal } from './components/RulesModal';
 import { SettingsDrawer } from './components/SettingsDrawer';
 import { MatchEndModal } from './components/MatchEndModal';
 import { LobbyScreen } from './components/LobbyScreen';
+
+export const STADIUMS: Ground[] = [
+  { 
+    id: 'lords', 
+    name: "The Home of Cricket", 
+    location: "London", 
+    gradientClass: "from-emerald-950/20 via-stone-950 to-black",
+    pitchColorClass: "bg-[#e5d3b3]", // Light dusty pitch
+    grassColorClass: "bg-emerald-800", // Classic lush green
+    pitchHex: "#e5d3b3"
+  },
+  { 
+    id: 'mcg', 
+    name: "The Colosseum", 
+    location: "Melbourne", 
+    gradientClass: "from-blue-950/20 via-stone-950 to-black",
+    pitchColorClass: "bg-[#c4b59d]", // Hard greyish pitch
+    grassColorClass: "bg-green-700", // Standard green
+    pitchHex: "#c4b59d"
+  },
+  { 
+    id: 'eden', 
+    name: "The Roar", 
+    location: "Kolkata", 
+    gradientClass: "from-orange-950/20 via-stone-950 to-black",
+    pitchColorClass: "bg-[#a37e5c]", // Dark soil pitch
+    grassColorClass: "bg-lime-900", // Slightly yellower green
+    pitchHex: "#a37e5c"
+  },
+  { 
+    id: 'wankhede', 
+    name: "The Cauldron", 
+    location: "Mumbai", 
+    gradientClass: "from-rose-950/20 via-stone-950 to-black",
+    pitchColorClass: "bg-[#d47b59]", // Red soil pitch
+    grassColorClass: "bg-[#1f4d29]", // Deep green
+    pitchHex: "#d47b59"
+  },
+  { 
+    id: 'gabba', 
+    name: "The Fortress", 
+    location: "Brisbane", 
+    gradientClass: "from-amber-950/20 via-stone-950 to-black",
+    pitchColorClass: "bg-[#d1c4a9]", // Bouncy hard pitch
+    grassColorClass: "bg-teal-900", // Dark blue-green
+    pitchHex: "#d1c4a9"
+  },
+];
 
 export default function App() {
   // Settings
@@ -77,6 +126,7 @@ export default function App() {
 
   // Game Engine State
   const [activeScreen, setActiveScreen] = useState<'LOBBY' | 'GAME'>('LOBBY');
+  const [selectedGround, setSelectedGround] = useState<Ground>(STADIUMS[0]);
   const [currentStrike, setCurrentStrike] = useState<'YOU' | 'AI'>('YOU');
   const [phase, setPhase] = useState<GamePhase>('INNINGS_1');
   const [targetRuns, setTargetRuns] = useState<number | undefined>(undefined);
@@ -509,11 +559,12 @@ export default function App() {
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 font-sans flex flex-col justify-between selection:bg-amber-500 selection:text-stone-950 relative overflow-x-hidden">
       {/* Background Stadium Glow & Vignette */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-950/20 via-stone-950 to-black pointer-events-none" />
+      <div className={`fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] ${activeScreen === 'GAME' ? selectedGround.gradientClass : 'from-amber-950/20 via-stone-950 to-black'} pointer-events-none transition-colors duration-1000`} />
 
       {activeScreen === 'LOBBY' ? (
         <LobbyScreen 
-          onStart={() => {
+          onStart={(ground) => {
+            setSelectedGround(ground);
             handleRestartMatch();
             setActiveScreen('GAME');
           }}
@@ -522,6 +573,7 @@ export default function App() {
           playerLevel={playerLevel}
           xpProgress={xpProgress}
           stats={stats}
+          stadiums={STADIUMS}
         />
       ) : (
         <div className="relative z-10 flex-1 flex flex-col justify-between w-full max-w-2xl mx-auto pb-4">
@@ -538,6 +590,7 @@ export default function App() {
             coins={coins}
             playerLevel={playerLevel}
             xpProgress={xpProgress}
+            selectedGround={selectedGround}
           />
 
           {/* Scoreboard */}
@@ -555,6 +608,7 @@ export default function App() {
           <CricketBoard
             currentTileIndex={currentTileIndex}
             isRolling={isRolling}
+            ground={selectedGround}
           />
 
           {/* Commentary Event Banner */}

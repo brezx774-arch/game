@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { BoardTile } from '../types';
+import { BoardTile, Ground } from '../types';
 import { BOARD_TILES } from '../utils/boardData';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -7,12 +7,14 @@ interface CricketBoardProps {
   currentTileIndex: number;
   isRolling: boolean;
   onSelectTile?: (tile: BoardTile) => void;
+  ground?: Ground;
 }
 
 export const CricketBoard: React.FC<CricketBoardProps> = ({
   currentTileIndex,
   isRolling,
   onSelectTile,
+  ground,
 }) => {
   const totalTiles = BOARD_TILES.length; // 32 tiles
 
@@ -105,10 +107,7 @@ export const CricketBoard: React.FC<CricketBoardProps> = ({
         
         {/* Stadium Grass Surface */}
         <div 
-          className="absolute inset-2 rounded-[32px] overflow-hidden shadow-[inset_0_5px_15px_rgba(0,0,0,0.6)]"
-          style={{
-            background: 'linear-gradient(180deg, #1f6f35 0%, #114c21 100%)', // Lush painted grass
-          }}
+          className={`absolute inset-2 rounded-[32px] overflow-hidden shadow-[inset_0_5px_15px_rgba(0,0,0,0.6)] transition-colors duration-1000 ${ground?.grassColorClass || "bg-emerald-800"}`}
         >
           {/* Mown grass stripes */}
           <div className="absolute inset-0 opacity-15 bg-[repeating-linear-gradient(0deg,transparent,transparent_20px,#ffffff_20px,#ffffff_40px)]" />
@@ -117,7 +116,7 @@ export const CricketBoard: React.FC<CricketBoardProps> = ({
           <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPHBhdGggZD0iTTAgMEgxdjFIMHoiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMC4xIi8+CjxwYXRoIGQ9Ik0yIDFIM3YxSDJ6IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')]" />
           
           {/* Boundary Rope */}
-          <div className="absolute inset-8 rounded-[24px] border-4 border-dashed border-white/60 shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+          <div className="absolute inset-8 rounded-[24px] border-4 border-dashed border-white/60 shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-colors duration-1000" />
 
           {/* Stadium Crowd / Stands (Outer Edge) */}
           <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black/40 to-transparent flex justify-around items-start overflow-hidden">
@@ -142,7 +141,7 @@ export const CricketBoard: React.FC<CricketBoardProps> = ({
           </div>
 
           {/* Central Pitch Area */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[22%] h-[40%] bg-[#d9b88c] rounded-md shadow-[inset_0_0_10px_rgba(0,0,0,0.2),0_4px_10px_rgba(0,0,0,0.3)] flex flex-col justify-between items-center py-2 border-2 border-[#b89768]">
+          <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[22%] h-[40%] rounded-md shadow-[inset_0_0_10px_rgba(0,0,0,0.2),0_4px_10px_rgba(0,0,0,0.3)] flex flex-col justify-between items-center py-2 border-2 border-black/20 transition-colors duration-1000 ${ground?.pitchColorClass || "bg-[#d9b88c]"}`}>
              {/* Pitch Texture */}
              <div className="absolute inset-0 opacity-30 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPHBhdGggZD0iTTAgMEgxdjFIMHoiIGZpbGw9IiM4YjVhMmIiIGZpbGwtb3BhY2l0eT0iMC41Ii8+Cjwvc3ZnPg==')]" />
             
@@ -218,6 +217,11 @@ export const CricketBoard: React.FC<CricketBoardProps> = ({
         {tilesWithCoords.map((tile) => {
           const isSelected = tile.index === currentTileIndex;
           const isCorner = tile.index % 8 === 0;
+          
+          const isBlackSquare = tile.bgHex === '#1c1917' || tile.bgHex === '#262626';
+          const tileBg = (isBlackSquare && ground?.pitchHex) ? ground.pitchHex : tile.bgHex;
+          const tileText = (isBlackSquare && ground?.pitchHex) ? '#292524' : tile.textHex;
+          const tileBorder = (isBlackSquare && ground?.pitchHex) ? '#44403c40' : tile.borderHex;
 
           return (
             <motion.div
@@ -227,9 +231,9 @@ export const CricketBoard: React.FC<CricketBoardProps> = ({
                 top: `${tile.y}%`,
                 x: '-50%',
                 y: '-50%',
-                backgroundColor: tile.bgHex,
-                borderColor: tile.borderHex,
-                color: tile.textHex,
+                backgroundColor: tileBg,
+                borderColor: tileBorder,
+                color: tileText,
               }}
               animate={isSelected && !isRolling ? {
                 y: ['-50%', '-60%', '-50%'],

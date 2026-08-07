@@ -1,6 +1,7 @@
 import React from 'react';
-import { Menu, Volume2, VolumeX, Settings, HelpCircle, Coins, Star } from 'lucide-react';
+import { Menu, Volume2, VolumeX, Settings, HelpCircle, Coins, Star, MapPin } from 'lucide-react';
 import { soundFx } from '../utils/audio';
+import { Ground } from '../types';
 
 interface HeaderProps {
   onOpenMenu: () => void;
@@ -11,6 +12,7 @@ interface HeaderProps {
   coins: number;
   playerLevel: number;
   xpProgress: number;
+  selectedGround?: Ground;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -22,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   coins,
   playerLevel,
   xpProgress,
+  selectedGround,
 }) => {
   return (
     <header className="w-full flex flex-col gap-2 px-3 py-3 relative z-20">
@@ -72,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* Main Logo */}
+        {/* Main Logo & Ground info */}
         <div className="flex flex-col items-center justify-center select-none -mt-2">
           <div className="relative flex items-center justify-center">
             {/* Stylized Logo Text */}
@@ -80,9 +83,18 @@ export const Header: React.FC<HeaderProps> = ({
               <h1 className="text-xl sm:text-2xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-sans uppercase">
                 SIX APPEAL
               </h1>
-              <div className="inline-block bg-gradient-to-r from-red-600 via-rose-500 to-red-600 px-2 py-0.5 rounded-sm text-[8px] sm:text-[9px] font-black tracking-widest text-white uppercase shadow-md mt-[-4px]">
-                CRICKET BOARD GAME
-              </div>
+              {selectedGround ? (
+                <div className="flex items-center gap-1 justify-center bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-sm shadow-md mt-[-4px] border border-white/10">
+                  <MapPin className="w-2.5 h-2.5 text-amber-400" />
+                  <span className="text-[8px] sm:text-[9px] font-black tracking-widest text-amber-100 uppercase">
+                    {selectedGround.name}, {selectedGround.location}
+                  </span>
+                </div>
+              ) : (
+                <div className="inline-block bg-gradient-to-r from-red-600 via-rose-500 to-red-600 px-2 py-0.5 rounded-sm text-[8px] sm:text-[9px] font-black tracking-widest text-white uppercase shadow-md mt-[-4px]">
+                  CRICKET BOARD GAME
+                </div>
+              )}
             </div>
 
             {/* Glowing Cricket Ball graphic behind/top */}

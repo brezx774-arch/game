@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Play, Settings, Trophy, User, Coins, Star, Store, Home, Medal, Activity } from 'lucide-react';
+import { Play, Settings, Trophy, User, Coins, Star, Store, Home, Medal, Activity, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundFx } from '../utils/audio';
+
+import { Ground } from '../types';
 
 interface PlayerStats {
   matchesPlayed: number;
@@ -12,12 +14,13 @@ interface PlayerStats {
 }
 
 interface LobbyScreenProps {
-  onStart: () => void;
+  onStart: (ground: Ground) => void;
   onOpenSettings: () => void;
   coins: number;
   playerLevel: number;
   xpProgress: number;
   stats: PlayerStats;
+  stadiums: Ground[];
 }
 
 export const LobbyScreen: React.FC<LobbyScreenProps> = ({
@@ -26,46 +29,94 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   coins,
   playerLevel,
   xpProgress,
-  stats
+  stats,
+  stadiums
 }) => {
   const [activeTab, setActiveTab] = useState<'HOME' | 'PROFILE' | 'STORE'>('HOME');
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [rouletteIndex, setRouletteIndex] = useState(0);
 
   const winRate = stats.matchesPlayed > 0 
     ? Math.round((stats.matchesWon / stats.matchesPlayed) * 100) 
     : 0;
 
+  const handlePlayClick = () => {
+    soundFx.playClick();
+    setIsSelecting(true);
+    
+    // Roulette animation
+    let iterations = 0;
+    const targetSpins = 15 + Math.floor(Math.random() * 10); // Random spins between 15 and 24
+    const baseDelay = 50;
+    
+    let currentIndex = Math.floor(Math.random() * stadiums.length);
+    setRouletteIndex(currentIndex);
+    
+    const spin = () => {
+      iterations++;
+      currentIndex = (currentIndex + 1) % stadiums.length;
+      setRouletteIndex(currentIndex);
+      
+      if (iterations < targetSpins) {
+        soundFx.playClick(); // a small tick sound
+        setTimeout(spin, baseDelay + (iterations * 5)); // slow down over time
+      } else {
+        soundFx.playPowerplayChime();
+        // final selection
+        const selected = stadiums[currentIndex];
+        setTimeout(() => {
+          onStart(selected);
+          setIsSelecting(false); // Reset selection state for next time
+        }, 1500);
+      }
+    };
+    
+    spin();
+  };
+
   return (
     <div className="flex flex-col items-center min-h-screen p-4 z-10 w-full max-w-md mx-auto relative pb-24 pt-8">
+      {/* Decorative background elements */}
+      <div className="absolute top-20 -left-12 w-48 h-48 bg-amber-500/10 rounded-full blur-[60px] pointer-events-none" />
+      <div className="absolute top-60 -right-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-[60px] pointer-events-none" />
+      
       {/* Header Profile Section */}
-      <div className="w-full flex justify-between items-center mb-10 bg-[#1e293b] p-3 rounded-2xl border-2 border-[#334155] shadow-xl">
-        <div className="flex items-center gap-3">
+      <div className="w-full flex justify-between items-center mb-12 bg-gradient-to-r from-[#1e293b] to-[#0f172a] p-3 rounded-2xl border-2 border-white/5 shadow-2xl relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-20 pointer-events-none" />
+        
+        <div className="flex items-center gap-4 z-10">
            <div className="relative">
-             <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 border-[3px] border-white flex items-center justify-center shadow-inner overflow-hidden">
-               <span className="text-white font-black text-lg drop-shadow-md z-10">{playerLevel}</span>
-               <Star className="absolute opacity-20 w-12 h-12 fill-white" />
+             <div className="w-14 h-14 rounded-xl bg-gradient-to-tr from-blue-600 via-blue-500 to-cyan-400 border-[3px] border-white/90 flex items-center justify-center shadow-lg transform rotate-3">
+               <div className="absolute inset-0 bg-white/20 rounded-lg translate-y-1/2" />
+               <span className="text-white font-black text-xl drop-shadow-md z-10 -rotate-3">{playerLevel}</span>
+               <Star className="absolute opacity-30 w-10 h-10 fill-white -rotate-3" />
              </div>
-             <div className="absolute -bottom-2 -right-1 bg-green-500 rounded-full border-2 border-[#1e293b] p-1">
-               <User className="w-3 h-3 text-white" />
+             <div className="absolute -bottom-2 -right-2 bg-gradient-to-br from-green-400 to-emerald-600 rounded-lg border-2 border-[#1e293b] p-1.5 shadow-md">
+               <User className="w-3.5 h-3.5 text-white drop-shadow-sm" />
              </div>
            </div>
            <div className="flex flex-col">
-             <span className="text-xs font-black text-white tracking-widest uppercase">Player</span>
-             <div className="w-24 h-2.5 bg-black/50 rounded-full overflow-hidden mt-1 border border-white/10">
-               <div 
-                 className="h-full bg-gradient-to-r from-green-400 to-emerald-400 rounded-full"
-                 style={{ width: `${xpProgress}%` }}
-               />
+             <span className="text-[11px] font-black text-stone-300 tracking-[0.2em] uppercase mb-1">Player Profile</span>
+             <div className="w-28 h-3 bg-black/60 rounded-full overflow-hidden border border-white/10 shadow-inner">
+               <motion.div 
+                 initial={{ width: 0 }}
+                 animate={{ width: `${xpProgress}%` }}
+                 transition={{ duration: 1, ease: "easeOut" }}
+                 className="h-full bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 rounded-full relative"
+               >
+                 <div className="absolute inset-0 bg-white/20" />
+               </motion.div>
              </div>
            </div>
         </div>
 
-        <div className="flex items-center gap-2 bg-black/30 p-2 rounded-xl border border-white/5">
+        <div className="flex items-center gap-3 bg-black/40 p-2.5 rounded-xl border border-white/10 shadow-inner z-10">
            <div className="flex flex-col items-end">
-             <span className="text-[10px] font-black text-[#facc15] tracking-widest uppercase leading-none">Coins</span>
-             <span className="text-base font-black text-white leading-none mt-1">{coins.toLocaleString()}</span>
+             <span className="text-[9px] font-black text-[#facc15] tracking-widest uppercase leading-none opacity-80">Balance</span>
+             <span className="text-lg font-black text-white leading-none mt-1 drop-shadow-md">{coins.toLocaleString()}</span>
            </div>
-           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-500 to-amber-300 border-2 border-white flex items-center justify-center shadow-inner">
-             <Coins className="w-4 h-4 text-yellow-900 fill-yellow-500 drop-shadow-sm" />
+           <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-500 via-amber-400 to-yellow-200 border-2 border-white/90 flex items-center justify-center shadow-lg">
+             <Coins className="w-5 h-5 text-yellow-900 fill-yellow-600 drop-shadow-sm" />
            </div>
         </div>
       </div>
@@ -84,62 +135,135 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
             <motion.div 
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', bounce: 0.5 }}
-              className="relative flex flex-col items-center justify-center mb-16"
+              transition={{ type: 'spring', bounce: 0.5, duration: 0.8 }}
+              className="relative flex flex-col items-center justify-center mb-20 mt-4"
             >
               <div className="relative z-10 text-center">
-                <h1 className="text-5xl sm:text-6xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-600 drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] font-sans uppercase">
+                <h1 className="text-6xl sm:text-7xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-600 drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] font-sans uppercase leading-none">
                   SIX<br />APPEAL
                 </h1>
-                <div className="inline-block bg-gradient-to-r from-red-600 via-rose-500 to-red-600 px-4 py-1 rounded-sm text-xs font-black tracking-widest text-white uppercase shadow-[0_4px_10px_rgba(239,68,68,0.5)] transform -rotate-2 -mt-4 border-2 border-red-900">
-                  BOARD GAME
-                </div>
+                <motion.div 
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="inline-block bg-gradient-to-r from-red-600 via-rose-500 to-red-600 px-5 py-1.5 rounded text-[10px] sm:text-xs font-black tracking-[0.3em] text-white uppercase shadow-[0_4px_15px_rgba(239,68,68,0.6)] transform -rotate-3 -mt-3 border-2 border-red-900/50"
+                >
+                  CRICKET BOARD GAME
+                </motion.div>
               </div>
 
               {/* Big Glowing Ball behind text */}
               <motion.div 
                 animate={{ rotate: 360 }}
                 transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-gradient-to-tr from-red-700/50 via-red-500/50 to-amber-400/50 rounded-full blur-[40px] -z-10"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 bg-[radial-gradient(circle,_rgba(239,68,68,0.6)_0%,_transparent_70%)] opacity-60 rounded-full blur-xl -z-10"
               />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-[radial-gradient(circle,_rgba(251,191,36,0.4)_0%,_transparent_70%)] rounded-full blur-lg -z-10" />
             </motion.div>
 
             {/* Main Actions */}
-            <div className="w-full flex flex-col gap-4">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  soundFx.playClick();
-                  onStart();
-                }}
-                className="w-full h-20 rounded-2xl bg-gradient-to-b from-[#10b981] to-[#047857] border-b-[6px] border-[#064e3b] text-white flex items-center justify-center gap-3 shadow-[0_10px_20px_rgba(16,185,129,0.4)] relative overflow-hidden"
-              >
-                 <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/20 rounded-t-xl" />
-                 <Play className="w-8 h-8 fill-white drop-shadow-md z-10" />
-                 <span className="text-3xl font-black tracking-widest uppercase drop-shadow-md z-10">PLAY NOW</span>
-              </motion.button>
+            <div className="w-full flex flex-col gap-5 px-2">
+              <AnimatePresence mode="wait">
+                {isSelecting ? (
+                  <motion.div
+                    key="selecting"
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    className="w-full h-44 rounded-3xl bg-gradient-to-b from-[#1e293b] to-black border-4 border-[#334155] flex flex-col items-center justify-center p-6 relative overflow-hidden shadow-[0_0_50px_rgba(250,204,21,0.2)]"
+                  >
+                    <motion.div 
+                      animate={{ rotate: 360 }} 
+                      transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                      className="absolute -inset-20 bg-[conic-gradient(from_0deg,transparent_0_340deg,rgba(250,204,21,0.4)_360deg)] rounded-full blur-2xl"
+                    />
+                    
+                    <span className="text-xs font-black text-stone-400 uppercase tracking-widest mb-4 z-10 flex items-center gap-2">
+                       <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>•</motion.span>
+                       Locating Match
+                       <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ duration: 1.5, repeat: Infinity, delay: 0.75 }}>•</motion.span>
+                    </span>
+                    
+                    <div className="h-20 flex items-center justify-center w-full relative z-10">
+                      <motion.div 
+                        key={rouletteIndex}
+                        initial={{ y: 30, opacity: 0, filter: 'blur(8px)', scale: 0.8 }}
+                        animate={{ y: 0, opacity: 1, filter: 'blur(0px)', scale: 1 }}
+                        exit={{ y: -30, opacity: 0, filter: 'blur(8px)', scale: 0.8 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex flex-col items-center absolute"
+                      >
+                        <h3 className="text-3xl font-black text-[#facc15] tracking-widest uppercase text-center leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                          {stadiums[rouletteIndex].name}
+                        </h3>
+                        <div className="flex items-center gap-1.5 mt-3 bg-black/60 px-4 py-1.5 rounded-full border border-white/10 shadow-inner">
+                          <MapPin className="w-3.5 h-3.5 text-amber-400" />
+                          <span className="text-xs font-bold text-amber-100 tracking-[0.2em] uppercase">
+                            {stadiums[rouletteIndex].location}
+                          </span>
+                        </div>
+                      </motion.div>
+                    </div>
+                    
+                    {/* Background glow matching stadium gradient */}
+                    <div className={`absolute inset-0 bg-gradient-to-tr ${stadiums[rouletteIndex].gradientClass} opacity-50 blur-2xl transition-colors duration-200`} />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="buttons"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="w-full flex flex-col gap-5"
+                  >
+                    <motion.button
+                      animate={{ 
+                        boxShadow: ['0 15px 30px rgba(16,185,129,0.3)', '0 15px 40px rgba(16,185,129,0.6)', '0 15px 30px rgba(16,185,129,0.3)']
+                      }}
+                      transition={{ duration: 2.5, repeat: Infinity }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handlePlayClick}
+                      className="group w-full h-24 rounded-3xl bg-gradient-to-b from-[#10b981] via-[#059669] to-[#047857] border-b-[8px] border-[#064e3b] text-white flex items-center justify-center gap-4 relative overflow-hidden"
+                    >
+                       <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/20 rounded-t-3xl" />
+                       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-30 mix-blend-overlay" />
+                       
+                       <motion.div
+                         animate={{ x: [-2, 2, -2] }}
+                         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                       >
+                         <Play className="w-10 h-10 fill-white drop-shadow-lg z-10" />
+                       </motion.div>
+                       <span className="text-4xl font-black tracking-widest uppercase drop-shadow-lg z-10 italic">PLAY NOW</span>
+                    </motion.button>
 
-              <div className="grid grid-cols-2 gap-4">
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  className="h-16 rounded-2xl bg-gradient-to-b from-stone-700 to-stone-800 border-b-[4px] border-stone-900 text-stone-200 flex items-center justify-center gap-2 shadow-lg relative overflow-hidden opacity-50 cursor-not-allowed"
-                >
-                   <Trophy className="w-5 h-5 text-[#facc15]" />
-                   <span className="text-sm font-black tracking-widest uppercase">Leaderboard</span>
-                </motion.button>
+                    <div className="grid grid-cols-2 gap-4">
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        className="h-20 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-black text-stone-200 flex flex-col items-center justify-center gap-1.5 shadow-xl relative overflow-hidden opacity-50 cursor-not-allowed"
+                      >
+                         <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/5 rounded-t-2xl" />
+                         <Trophy className="w-6 h-6 text-[#facc15] drop-shadow-sm" />
+                         <span className="text-[10px] font-black tracking-widest uppercase">Leaderboard</span>
+                      </motion.button>
 
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    soundFx.playClick();
-                    onOpenSettings();
-                  }}
-                  className="h-16 rounded-2xl bg-gradient-to-b from-stone-700 to-stone-800 border-b-[4px] border-stone-900 text-stone-200 flex items-center justify-center gap-2 shadow-lg relative overflow-hidden"
-                >
-                   <Settings className="w-5 h-5" />
-                   <span className="text-sm font-black tracking-widest uppercase">Settings</span>
-                </motion.button>
-              </div>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          soundFx.playClick();
+                          onOpenSettings();
+                        }}
+                        className="h-20 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-black text-stone-200 flex flex-col items-center justify-center gap-1.5 shadow-xl relative overflow-hidden group"
+                      >
+                         <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/5 rounded-t-2xl group-hover:bg-white/10 transition-colors" />
+                         <Settings className="w-6 h-6 text-stone-400 group-hover:rotate-90 transition-transform duration-500" />
+                         <span className="text-[10px] font-black tracking-widest uppercase">Settings</span>
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         )}

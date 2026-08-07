@@ -59,6 +59,16 @@ export type GamePhase =
   | 'INNINGS_2' 
   | 'MATCH_OVER';
 
+export interface Ground {
+  id: string;
+  name: string;
+  location: string;
+  gradientClass: string;
+  pitchColorClass: string;
+  grassColorClass: string;
+  pitchHex: string;
+}
+
 export type GameMode = 'VS_AI' | 'PASS_AND_PLAY' | 'TOURNAMENT';
 
 export interface GameSettings {
