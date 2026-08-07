@@ -183,25 +183,27 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                        <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ duration: 1.5, repeat: Infinity, delay: 0.75 }}>•</motion.span>
                     </span>
                     
-                    <div className="h-20 flex items-center justify-center w-full relative z-10">
-                      <motion.div 
-                        key={rouletteIndex}
-                        initial={{ y: 30, opacity: 0, filter: 'blur(8px)', scale: 0.8 }}
-                        animate={{ y: 0, opacity: 1, filter: 'blur(0px)', scale: 1 }}
-                        exit={{ y: -30, opacity: 0, filter: 'blur(8px)', scale: 0.8 }}
-                        transition={{ duration: 0.15 }}
-                        className="flex flex-col items-center absolute"
-                      >
-                        <h3 className="text-3xl font-black text-[#facc15] tracking-widest uppercase text-center leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                          {stadiums[rouletteIndex].name}
-                        </h3>
-                        <div className="flex items-center gap-1.5 mt-3 bg-black/60 px-4 py-1.5 rounded-full border border-white/10 shadow-inner">
-                          <MapPin className="w-3.5 h-3.5 text-amber-400" />
-                          <span className="text-xs font-bold text-amber-100 tracking-[0.2em] uppercase">
-                            {stadiums[rouletteIndex].location}
-                          </span>
-                        </div>
-                      </motion.div>
+                    <div className="h-24 flex items-center justify-center w-full relative z-10 overflow-hidden">
+                      <AnimatePresence mode="popLayout">
+                        <motion.div 
+                          key={rouletteIndex}
+                          initial={{ y: 40, opacity: 0, scale: 0.9 }}
+                          animate={{ y: 0, opacity: 1, scale: 1 }}
+                          exit={{ y: -40, opacity: 0, scale: 0.9 }}
+                          transition={{ duration: 0.12, ease: "easeOut" }}
+                          className="flex flex-col items-center absolute w-full"
+                        >
+                          <h3 className="text-3xl font-black text-[#facc15] tracking-widest uppercase text-center leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] px-4">
+                            {stadiums[rouletteIndex].name}
+                          </h3>
+                          <div className="flex items-center gap-1.5 mt-3 bg-black/60 px-4 py-1.5 rounded-full border border-white/10 shadow-inner">
+                            <MapPin className="w-3.5 h-3.5 text-amber-400" />
+                            <span className="text-xs font-bold text-amber-100 tracking-[0.2em] uppercase">
+                              {stadiums[rouletteIndex].location}
+                            </span>
+                          </div>
+                        </motion.div>
+                      </AnimatePresence>
                     </div>
                     
                     {/* Background glow matching stadium gradient */}

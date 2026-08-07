@@ -73,21 +73,33 @@ export const CricketBoard: React.FC<CricketBoardProps> = ({
 
   const currentTile = BOARD_TILES[currentTileIndex] || BOARD_TILES[0];
 
-  const [showBoundaryAnim, setShowBoundaryAnim] = useState<string | null>(null);
+  const [popupEvent, setPopupEvent] = useState<{type: string, text: string} | null>(null);
 
   useEffect(() => {
     if (!isRolling) {
       if (currentTile.type === 'RUN_4') {
-        setShowBoundaryAnim('4');
-        const t = setTimeout(() => setShowBoundaryAnim(null), 2500);
+        setPopupEvent({type: '4', text: 'FOUR!'});
+        const t = setTimeout(() => setPopupEvent(null), 2500);
         return () => clearTimeout(t);
       } else if (currentTile.type === 'RUN_6' || currentTile.type === 'POWER_SHOT') {
-        setShowBoundaryAnim('6');
-        const t = setTimeout(() => setShowBoundaryAnim(null), 2500);
+        setPopupEvent({type: '6', text: 'SIX!'});
+        const t = setTimeout(() => setPopupEvent(null), 2500);
+        return () => clearTimeout(t);
+      } else if (currentTile.type === 'WICKET') {
+        setPopupEvent({type: 'W', text: 'WICKET!'});
+        const t = setTimeout(() => setPopupEvent(null), 2500);
+        return () => clearTimeout(t);
+      } else if (currentTile.type === 'CATCH') {
+        setPopupEvent({type: 'C', text: 'OUT!'});
+        const t = setTimeout(() => setPopupEvent(null), 2500);
+        return () => clearTimeout(t);
+      } else if (currentTile.type === 'FREE_HIT') {
+        setPopupEvent({type: 'FREE', text: 'FREE HIT!'});
+        const t = setTimeout(() => setPopupEvent(null), 2500);
         return () => clearTimeout(t);
       }
     } else {
-      setShowBoundaryAnim(null);
+      setPopupEvent(null);
     }
   }, [isRolling, currentTile]);
 
@@ -147,24 +159,27 @@ export const CricketBoard: React.FC<CricketBoardProps> = ({
             
              {/* Boundary Animation Overlay */}
              <AnimatePresence>
-               {showBoundaryAnim && (
+               {popupEvent && (
                  <motion.div
                    key="boundary-anim"
-                   initial={{ scale: 0, opacity: 0, y: 50, rotateX: 30 }}
-                   animate={{ scale: [0, 1.8, 1.4], opacity: 1, y: -20, rotateX: 0 }}
-                   exit={{ opacity: 0, scale: 2, y: -60 }}
-                   transition={{ duration: 1.5, times: [0, 0.4, 1], ease: "easeOut" }}
+                   initial={{ scale: 0, opacity: 0, y: 30, rotateX: 20 }}
+                   animate={{ scale: [0, 1.3, 1], opacity: 1, y: -15, rotateX: 0 }}
+                   exit={{ opacity: 0, scale: 1.2, y: -40 }}
+                   transition={{ duration: 1.2, times: [0, 0.4, 1], ease: "easeOut" }}
                    className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none"
                  >
-                    <div className="relative">
+                    <div className="relative whitespace-nowrap">
                       {/* Exploding starburst behind text */}
                       <motion.div 
-                        animate={{ rotate: 180, scale: [0.5, 1.2, 1.5], opacity: [1, 0] }}
-                        transition={{ duration: 1, ease: "easeOut" }}
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-[radial-gradient(circle,rgba(255,255,255,1)_0%,rgba(251,191,36,0)_70%)] mix-blend-overlay"
+                        animate={{ rotate: 180, scale: [0.5, 1.2, 1.4], opacity: [1, 0] }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 mix-blend-overlay ${popupEvent.type === 'W' || popupEvent.type === 'C' ? 'bg-[radial-gradient(circle,rgba(255,255,255,1)_0%,rgba(239,68,68,0)_70%)]' : 'bg-[radial-gradient(circle,rgba(255,255,255,1)_0%,rgba(251,191,36,0)_70%)]'}`}
                       />
-                      <span className="text-5xl sm:text-7xl font-black italic text-transparent bg-clip-text bg-gradient-to-tr from-[#facc15] to-[#fef08a] drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] tracking-tighter" style={{ WebkitTextStroke: '2px #000' }}>
-                        {showBoundaryAnim === '4' ? 'FOUR!' : 'SIX!'}
+                      <span 
+                        className={`text-4xl sm:text-5xl font-black italic tracking-tighter ${popupEvent.type === 'W' || popupEvent.type === 'C' ? 'text-red-500' : 'text-amber-400'}`} 
+                        style={{ textShadow: '2px 2px 0 #000, -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 8px 16px rgba(0,0,0,0.6)' }}
+                      >
+                        {popupEvent.text}
                       </span>
                     </div>
                  </motion.div>
