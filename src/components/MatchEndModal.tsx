@@ -49,21 +49,44 @@ export const MatchEndModal: React.FC<MatchEndModalProps> = ({
     resultTitle = `${aiState.name.toUpperCase()} WON BY ${diff} RUNS!`;
   }
 
+  // Calculate Match MVP
+  const getMvpPoints = (player: PlayerState) => player.runs + (player.wickets * 20);
+  const youMvpPoints = getMvpPoints(youState);
+  const aiMvpPoints = getMvpPoints(aiState);
+  const mvp = youMvpPoints >= aiMvpPoints ? youState : aiState;
+  const isYouMvp = mvp.id === youState.id;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-      <div className="bg-stone-900 border-2 border-amber-500/80 rounded-3xl max-w-md w-full p-6 text-stone-100 shadow-[0_0_50px_rgba(245,158,11,0.5)] text-center relative">
+      <div className="bg-stone-900 border-2 border-amber-500/80 rounded-3xl max-w-md w-full p-6 text-stone-100 shadow-[0_0_50px_rgba(245,158,11,0.5)] text-center relative overflow-hidden">
+        {/* MVP Background Glow */}
+        <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 blur-3xl opacity-20 pointer-events-none ${isYouMvp ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+        
         {/* Trophy Header */}
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-400 border-2 border-amber-200 shadow-xl flex items-center justify-center mx-auto mb-3 text-stone-950 animate-bounce">
+        <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-400 border-2 border-amber-200 shadow-xl flex items-center justify-center mx-auto mb-3 text-stone-950 animate-bounce">
           <Trophy className="w-9 h-9 fill-stone-950" />
         </div>
 
-        <h2 className="text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 uppercase tracking-wide">
+        <h2 className="relative z-10 text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 uppercase tracking-wide">
           {resultTitle}
         </h2>
 
-        <p className="text-xs text-stone-400 font-semibold mt-1 mb-5">
+        <p className="relative z-10 text-xs text-stone-400 font-semibold mt-1 mb-3">
           Match Completed • T20 Board Showdown
         </p>
+
+        {/* MVP Badge */}
+        <div className="flex justify-center mb-5 relative z-10">
+          <div className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 p-[2px] rounded-full shadow-lg">
+            <div className="bg-stone-950 px-4 py-1.5 rounded-full flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <span className="text-[11px] font-black tracking-widest uppercase text-amber-400">
+                MVP: <span className="text-white">{mvp.name}</span>
+              </span>
+              <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
+            </div>
+          </div>
+        </div>
 
         {/* Rewards Banner */}
         <div className="bg-[#1e293b] border-2 border-[#334155] rounded-xl p-3 flex justify-center gap-6 mb-5 shadow-inner">

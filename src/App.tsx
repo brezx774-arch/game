@@ -156,12 +156,52 @@ export default function App() {
     return saved ? JSON.parse(saved) : { matchesPlayed: 0, matchesWon: 0, totalRuns: 0, totalWickets: 0, highestScore: 0 };
   });
 
+  const [dailyStreak, setDailyStreak] = useState<number>(() => {
+    return parseInt(localStorage.getItem('cricket_daily_streak') || '0', 10);
+  });
+  const [lastLoginDate, setLastLoginDate] = useState<string>(() => {
+    return localStorage.getItem('cricket_last_login') || '';
+  });
+  const [showDailyReward, setShowDailyReward] = useState<boolean>(false);
+  const [dailyRewardAmount, setDailyRewardAmount] = useState<number>(0);
+
   // Persist Profile
   useEffect(() => {
     localStorage.setItem('cricket_coins', coins.toString());
     localStorage.setItem('cricket_xp', xp.toString());
     localStorage.setItem('cricket_stats', JSON.stringify(stats));
   }, [coins, xp, stats]);
+
+  // Daily Reward Logic
+  useEffect(() => {
+    const today = new Date().toDateString();
+    if (lastLoginDate !== today) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      let newStreak = dailyStreak;
+      if (lastLoginDate === yesterday.toDateString()) {
+        newStreak += 1;
+      } else {
+        newStreak = 1; // Reset streak if missed a day or first time
+      }
+      
+      const reward = 50 + (Math.min(newStreak, 7) * 10); // Cap multiplier at 7 days
+      setDailyRewardAmount(reward);
+      setDailyStreak(newStreak);
+      setLastLoginDate(today);
+      setShowDailyReward(true);
+      
+      localStorage.setItem('cricket_daily_streak', newStreak.toString());
+      localStorage.setItem('cricket_last_login', today);
+    }
+  }, [lastLoginDate, dailyStreak]);
+
+  const claimDailyReward = () => {
+    soundFx.playCoins();
+    setCoins(c => c + dailyRewardAmount);
+    setShowDailyReward(false);
+  };
 
   // Calculate Level from XP
   const playerLevel = Math.floor(Math.sqrt(xp / 100)) + 1;
@@ -574,6 +614,10 @@ export default function App() {
           xpProgress={xpProgress}
           stats={stats}
           stadiums={STADIUMS}
+          dailyStreak={dailyStreak}
+          showDailyReward={showDailyReward}
+          dailyRewardAmount={dailyRewardAmount}
+          onClaimDailyReward={claimDailyReward}
         />
       ) : (
         <div className="relative z-10 flex-1 flex flex-col justify-between w-full max-w-2xl mx-auto pb-4">
@@ -662,7 +706,7 @@ export default function App() {
 
       {/* Match End Summary Modal */}
       <MatchEndModal
-        isOpen={phase === 'MATCH_OVER'}
+        isOpen={phase === 'MATCH_OVER' && activeScreen === 'GAME'}
         youState={youState}
         aiState={aiState}
         targetRuns={targetRuns}

@@ -175,12 +175,19 @@ export const CricketBoard: React.FC<CricketBoardProps> = ({
                         transition={{ duration: 0.8, ease: "easeOut" }}
                         className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 mix-blend-overlay ${popupEvent.type === 'W' || popupEvent.type === 'C' ? 'bg-[radial-gradient(circle,rgba(255,255,255,1)_0%,rgba(239,68,68,0)_70%)]' : 'bg-[radial-gradient(circle,rgba(255,255,255,1)_0%,rgba(251,191,36,0)_70%)]'}`}
                       />
-                      <span 
-                        className={`text-4xl sm:text-5xl font-black italic tracking-tighter ${popupEvent.type === 'W' || popupEvent.type === 'C' ? 'text-red-500' : 'text-amber-400'}`} 
-                        style={{ textShadow: '2px 2px 0 #000, -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 8px 16px rgba(0,0,0,0.6)' }}
-                      >
-                        {popupEvent.text}
-                      </span>
+                      <div className="relative flex items-center justify-center">
+                        <span 
+                          className="absolute text-5xl sm:text-6xl font-black italic tracking-tighter text-black z-0 drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)]" 
+                          style={{ WebkitTextStroke: '8px #000' }}
+                        >
+                          {popupEvent.text}
+                        </span>
+                        <span 
+                          className={`relative z-10 text-5xl sm:text-6xl font-black italic tracking-tighter ${popupEvent.type === 'W' || popupEvent.type === 'C' ? 'text-red-500' : 'text-[#facc15]'}`} 
+                        >
+                          {popupEvent.text}
+                        </span>
+                      </div>
                     </div>
                  </motion.div>
                )}

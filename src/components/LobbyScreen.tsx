@@ -21,6 +21,10 @@ interface LobbyScreenProps {
   xpProgress: number;
   stats: PlayerStats;
   stadiums: Ground[];
+  dailyStreak: number;
+  showDailyReward: boolean;
+  dailyRewardAmount: number;
+  onClaimDailyReward: () => void;
 }
 
 export const LobbyScreen: React.FC<LobbyScreenProps> = ({
@@ -30,7 +34,11 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   playerLevel,
   xpProgress,
   stats,
-  stadiums
+  stadiums,
+  dailyStreak,
+  showDailyReward,
+  dailyRewardAmount,
+  onClaimDailyReward
 }) => {
   const [activeTab, setActiveTab] = useState<'HOME' | 'PROFILE' | 'STORE'>('HOME');
   const [isSelecting, setIsSelecting] = useState(false);
@@ -81,7 +89,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
       <div className="absolute top-60 -right-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-[60px] pointer-events-none" />
       
       {/* Header Profile Section */}
-      <div className="w-full flex justify-between items-center mb-12 bg-gradient-to-r from-[#1e293b] to-[#0f172a] p-3 rounded-2xl border-2 border-white/5 shadow-2xl relative overflow-hidden">
+      <div className="w-full flex justify-between items-center mb-4 bg-gradient-to-r from-[#1e293b] to-[#0f172a] p-3 rounded-2xl border-2 border-white/5 shadow-2xl relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-20 pointer-events-none" />
         
         <div className="flex items-center gap-4 z-10">
@@ -120,6 +128,71 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
            </div>
         </div>
       </div>
+
+      {/* Daily Streak Banner */}
+      <div className="w-full flex justify-center mb-8 z-20 relative">
+         <motion.div 
+           initial={{ scale: 0.9, opacity: 0, y: -10 }}
+           animate={{ scale: 1, opacity: 1, y: 0 }}
+           transition={{ delay: 0.2 }}
+           className="bg-gradient-to-r from-orange-600 to-rose-600 px-4 py-1.5 rounded-full border border-white/20 shadow-lg flex items-center gap-2"
+         >
+            <span className="text-white text-xs font-black tracking-widest uppercase">
+              Daily Streak: <span className="text-amber-300">{dailyStreak} {dailyStreak > 1 ? 'Days' : 'Day'}</span> 🔥
+            </span>
+         </motion.div>
+      </div>
+
+      {/* Daily Reward Modal */}
+      <AnimatePresence>
+        {showDailyReward && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-gradient-to-b from-[#1e293b] to-black w-full max-w-sm rounded-3xl border-4 border-amber-500/50 p-6 shadow-[0_0_50px_rgba(245,158,11,0.3)] flex flex-col items-center text-center relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-30 pointer-events-none" />
+              
+              <motion.div 
+                animate={{ rotate: 360 }} 
+                transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                className="absolute -top-32 -left-32 w-64 h-64 bg-[conic-gradient(from_0deg,transparent_0_340deg,rgba(245,158,11,0.3)_360deg)] rounded-full blur-2xl pointer-events-none"
+              />
+
+              <div className="w-20 h-20 bg-gradient-to-tr from-amber-500 to-yellow-300 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.6)] mb-6 z-10 border-4 border-white/20">
+                <Coins className="w-10 h-10 text-yellow-900 fill-amber-500" />
+              </div>
+
+              <h2 className="text-3xl font-black italic text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-500 mb-2 uppercase z-10 drop-shadow-md">
+                Daily Reward!
+              </h2>
+              
+              <p className="text-stone-300 text-sm font-semibold mb-6 z-10">
+                You're on a <strong className="text-amber-400">{dailyStreak} day</strong> streak! Keep it up for more coins.
+              </p>
+
+              <div className="bg-black/50 border border-amber-500/30 rounded-2xl p-4 w-full mb-6 z-10 flex flex-col items-center">
+                <span className="text-xs text-amber-500 font-black uppercase tracking-widest mb-1">Reward</span>
+                <span className="text-4xl font-black text-white">+{dailyRewardAmount} <span className="text-xl">Coins</span></span>
+              </div>
+
+              <button
+                onClick={onClaimDailyReward}
+                className="w-full h-14 bg-gradient-to-b from-amber-400 to-amber-600 rounded-xl border-b-[4px] border-amber-700 text-amber-950 font-black text-lg tracking-widest uppercase shadow-lg active:scale-95 active:border-b-0 active:translate-y-[4px] transition-all z-10"
+              >
+                Claim
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Content Area */}
       <AnimatePresence mode="wait">
