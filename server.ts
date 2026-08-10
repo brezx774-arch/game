@@ -51,6 +51,31 @@ async function startServer() {
         // Wait for an opponent
         waitingPlayers.push(socket);
         socket.emit('waiting_for_opponent');
+
+        // After 4 seconds, if still waiting, give them an AI match disguised as a real player
+        setTimeout(() => {
+          const index = waitingPlayers.indexOf(socket);
+          if (index !== -1) {
+            // Still waiting
+            waitingPlayers.splice(index, 1);
+            
+            const roomId = `room_ai_${socket.id}`;
+            socket.join(roomId);
+            
+            const fakeOpponentId = `bot_${Math.floor(Math.random() * 100000)}`;
+            
+            socket.emit('match_found_bot', {
+              roomId,
+              botId: fakeOpponentId,
+              botName: `Guest${Math.floor(1000 + Math.random() * 9000)}`
+            });
+            
+            const firstStriker = Math.random() > 0.5 ? socket.id : fakeOpponentId;
+            socket.emit('match_start', {
+              firstStriker
+            });
+          }
+        }, 4000);
       }
     });
 

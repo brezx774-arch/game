@@ -621,11 +621,7 @@ export default function App() {
       };
       
       const handleOpponentDisconnected = () => {
-        setPhase('MATCH_OVER');
-        setCommentaryMsg('Opponent disconnected.');
-        setCommentarySubMsg('You win by default!');
-        setCoins(c => c + 150);
-        setXp(x => x + 200);
+        setSettings(prev => ({ ...prev, mode: 'VS_AI' }));
       };
 
       socketService.on('opponent_action', handleOpponentAction);
@@ -642,16 +638,48 @@ export default function App() {
   useEffect(() => {
     if (phase !== 'MATCH_OVER' && currentStrike === 'AI' && settings.mode === 'VS_AI' && !isRolling) {
       const timer = setTimeout(() => {
-        // AI selects tactic dynamically based on target/runrate
-        const aiTactics: TacticMode[] = ['DEFEND', 'ROTATE', 'ATTACK'];
-        const randomTactic = aiTactics[Math.floor(Math.random() * aiTactics.length)];
-        setSelectedTactic(randomTactic);
+        let aiTactic: TacticMode = 'ROTATE';
+        
+        if (targetRuns) {
+          // Chasing logic
+          const runsNeeded = targetRuns - aiState.runs;
+          const ballsLeft = (settings.maxOvers * 6) - aiState.ballsBowled;
+          const reqRunRate = (runsNeeded / Math.max(1, ballsLeft)) * 6;
+
+          if (ballsLeft <= 6 || reqRunRate > 10) {
+            aiTactic = 'ATTACK';
+          } else if (aiState.wickets >= 8 && reqRunRate < 6) {
+            aiTactic = 'DEFEND';
+          } else if (reqRunRate > 6) {
+            aiTactic = Math.random() > 0.3 ? 'ATTACK' : 'ROTATE';
+          } else {
+            aiTactic = Math.random() > 0.6 ? 'ROTATE' : 'DEFEND';
+          }
+        } else {
+          // Batting first logic
+          const ballsLeft = (settings.maxOvers * 6) - aiState.ballsBowled;
+          
+          if (aiState.wickets >= 7) {
+            aiTactic = 'DEFEND';
+          } else if (isCurrentPowerplay) {
+            aiTactic = 'ATTACK';
+          } else if (ballsLeft <= 12) {
+            aiTactic = Math.random() > 0.2 ? 'ATTACK' : 'ROTATE';
+          } else {
+            const rand = Math.random();
+            if (rand < 0.2) aiTactic = 'DEFEND';
+            else if (rand < 0.7) aiTactic = 'ROTATE';
+            else aiTactic = 'ATTACK';
+          }
+        }
+
+        setSelectedTactic(aiTactic);
         handleRoll();
-      }, 1200);
+      }, 1200 + Math.random() * 800); // Random delay to feel more human
 
       return () => clearTimeout(timer);
     }
-  }, [currentStrike, isRolling, phase, settings.mode, handleRoll]);
+  }, [currentStrike, isRolling, phase, settings.mode, handleRoll, targetRuns, aiState.runs, aiState.ballsBowled, aiState.wickets, settings.maxOvers, isCurrentPowerplay]);
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 font-sans flex flex-col justify-between selection:bg-amber-500 selection:text-stone-950 relative overflow-x-hidden">
@@ -670,7 +698,7 @@ export default function App() {
             handleRestartMatch();
             setActiveScreen('GAME');
           }}
-          onStartMultiplayer={(roomId, firstStrikerId, opponentId) => {
+          onStartMultiplayer={(roomId, firstStrikerId, opponentId, opponentName, isBot) => {
             setMultiplayerRoomId(roomId);
             setMultiplayerOpponentId(opponentId);
             setMyPlayerId(socketService.socket?.id || 'YOU');
@@ -679,7 +707,7 @@ export default function App() {
             // Randomly select stadium for multiplayer
             const randomGround = STADIUMS[Math.floor(Math.random() * STADIUMS.length)];
             setSelectedGround(randomGround);
-            setSettings(prev => ({ ...prev, mode: 'MULTIPLAYER' }));
+            setSettings(prev => ({ ...prev, mode: isBot ? 'VS_AI' : 'MULTIPLAYER' }));
 
             setYouState({
               name: 'YOU',
@@ -694,7 +722,7 @@ export default function App() {
               dotsCount: 0,
             });
             setAiState({
-              name: 'OPPONENT',
+              name: opponentName || 'OPPONENT',
               avatar: 'robot', // maybe change to generic player avatar later
               runs: 0,
               wickets: 0,

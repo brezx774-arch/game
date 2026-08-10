@@ -16,7 +16,7 @@ interface PlayerStats {
 
 interface LobbyScreenProps {
   onStart: (ground: Ground, mode?: GameMode) => void;
-  onStartMultiplayer: (roomId: string, firstStrikerId: string, opponentId: string) => void;
+  onStartMultiplayer: (roomId: string, firstStrikerId: string, opponentId: string, opponentName?: string, isBot?: boolean) => void;
   onOpenSettings: () => void;
   coins: number;
   playerLevel: number;
@@ -52,33 +52,63 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   useEffect(() => {
     let currentRoomId = '';
     let currentOpponentId = '';
+    let currentOpponentName = '';
+    let isBotMatch = false;
 
     const handleMatchFound = (data: { roomId: string, players: string[] }) => {
       currentRoomId = data.roomId;
       const myId = socketService.socket?.id || '';
       currentOpponentId = data.players.find(id => id !== myId) || '';
+      currentOpponentName = 'OPPONENT';
+      isBotMatch = false;
+    };
+    
+    const handleMatchFoundBot = (data: { roomId: string, botId: string, botName: string }) => {
+      currentRoomId = data.roomId;
+      currentOpponentId = data.botId;
+      currentOpponentName = data.botName;
+      isBotMatch = true;
     };
 
     const handleMatchStart = (data: { firstStriker: string }) => {
       setIsMatchmaking(false);
       setCreatedRoomCode(null);
-      onStartMultiplayer(currentRoomId, data.firstStriker, currentOpponentId);
+      onStartMultiplayer(currentRoomId, data.firstStriker, currentOpponentId, currentOpponentName, isBotMatch);
     };
 
     const handleRoomCreated = (data: { roomCode: string }) => {
       setCreatedRoomCode(data.roomCode);
     };
 
+    const handleOpponentDisconnected = () => {
+      if (isMatchmaking) {
+        setIsMatchmaking(false);
+        setCreatedRoomCode(null);
+      }
+    };
+
+    const handleRoomError = (data: { message: string }) => {
+      setIsMatchmaking(false);
+      setCreatedRoomCode(null);
+      alert(data.message); // simple alert for now
+    };
+
     socketService.on('match_found', handleMatchFound);
+    socketService.on('match_found_bot', handleMatchFoundBot);
     socketService.on('match_start', handleMatchStart);
     socketService.on('room_created', handleRoomCreated);
+    socketService.on('room_error', handleRoomError);
+    socketService.on('opponent_disconnected', handleOpponentDisconnected);
 
     return () => {
       socketService.off('match_found', handleMatchFound);
+      socketService.off('match_found_bot', handleMatchFoundBot);
       socketService.off('match_start', handleMatchStart);
       socketService.off('room_created', handleRoomCreated);
+      socketService.off('room_error', handleRoomError);
+      socketService.off('opponent_disconnected', handleOpponentDisconnected);
     };
-  }, [onStartMultiplayer]);
+  }, [onStartMultiplayer, isMatchmaking]);
 
   const winRate = stats.matchesPlayed > 0 
     ? Math.round((stats.matchesWon / stats.matchesPlayed) * 100) 
@@ -413,7 +443,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                          <span className="text-lg font-black italic tracking-widest drop-shadow-md uppercase">Find Match</span>
                       </motion.button>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-3">
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.95 }}
@@ -423,18 +453,19 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                             socketService.connect();
                             socketService.emit('create_room');
                           }}
-                          className="h-14 rounded-2xl bg-gradient-to-b from-purple-500 to-purple-700 border-b-[6px] border-purple-900 text-white flex items-center justify-center gap-2 relative overflow-hidden shadow-lg"
+                          className="h-14 rounded-2xl bg-gradient-to-b from-purple-500 to-purple-700 border-b-[6px] border-purple-900 text-white flex items-center justify-center gap-2 relative overflow-hidden shadow-lg w-full"
                         >
                           <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-2xl" />
                           <span className="text-sm font-black tracking-widest uppercase">Create Room</span>
                         </motion.button>
                         
-                        <div className="relative flex flex-col h-14">
+                        <div className="flex gap-2 h-14">
                           <input 
+                            id="room-code-input"
                             type="text" 
                             placeholder="CODE"
                             maxLength={4}
-                            className="absolute inset-0 w-full h-full rounded-2xl bg-stone-900 border-2 border-stone-700 text-center text-white font-black tracking-widest uppercase outline-none focus:border-purple-500 z-10 transition-colors"
+                            className="flex-1 rounded-2xl bg-stone-900 border-2 border-stone-700 text-center text-white font-black tracking-widest uppercase outline-none focus:border-purple-500 transition-colors"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 const code = (e.target as HTMLInputElement).value;
@@ -447,6 +478,23 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                               }
                             }}
                           />
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                              const input = document.getElementById('room-code-input') as HTMLInputElement;
+                              const code = input?.value;
+                              if (code && code.length === 4) {
+                                soundFx.playClick();
+                                setIsMatchmaking(true);
+                                socketService.connect();
+                                socketService.emit('join_room', { roomCode: code });
+                              }
+                            }}
+                            className="h-full px-6 rounded-2xl bg-stone-800 text-stone-200 font-black text-sm uppercase tracking-wider border-b-[4px] border-stone-950 flex items-center justify-center shadow-lg"
+                          >
+                            Join
+                          </motion.button>
                         </div>
                       </div>
                     </div>
