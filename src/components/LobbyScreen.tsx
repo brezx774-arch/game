@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Play, Settings, Trophy, User, Coins, Star, Store, Home, Medal, Activity, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundFx } from '../utils/audio';
+import { socketService } from '../utils/socket';
 
-import { Ground } from '../types';
+import { Ground, GameMode } from '../types';
 
 interface PlayerStats {
   matchesPlayed: number;
@@ -14,7 +15,8 @@ interface PlayerStats {
 }
 
 interface LobbyScreenProps {
-  onStart: (ground: Ground) => void;
+  onStart: (ground: Ground, mode?: GameMode) => void;
+  onStartMultiplayer: (roomId: string, firstStrikerId: string, opponentId: string) => void;
   onOpenSettings: () => void;
   coins: number;
   playerLevel: number;
@@ -29,6 +31,7 @@ interface LobbyScreenProps {
 
 export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   onStart,
+  onStartMultiplayer,
   onOpenSettings,
   coins,
   playerLevel,
@@ -42,7 +45,32 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'HOME' | 'PROFILE' | 'STORE'>('HOME');
   const [isSelecting, setIsSelecting] = useState(false);
+  const [isMatchmaking, setIsMatchmaking] = useState(false);
   const [rouletteIndex, setRouletteIndex] = useState(0);
+
+  useEffect(() => {
+    let currentRoomId = '';
+    let currentOpponentId = '';
+
+    const handleMatchFound = (data: { roomId: string, players: string[] }) => {
+      currentRoomId = data.roomId;
+      const myId = socketService.socket?.id || '';
+      currentOpponentId = data.players.find(id => id !== myId) || '';
+    };
+
+    const handleMatchStart = (data: { firstStriker: string }) => {
+      setIsMatchmaking(false);
+      onStartMultiplayer(currentRoomId, data.firstStriker, currentOpponentId);
+    };
+
+    socketService.on('match_found', handleMatchFound);
+    socketService.on('match_start', handleMatchStart);
+
+    return () => {
+      socketService.off('match_found', handleMatchFound);
+      socketService.off('match_start', handleMatchStart);
+    };
+  }, [onStartMultiplayer]);
 
   const winRate = stats.matchesPlayed > 0 
     ? Math.round((stats.matchesWon / stats.matchesPlayed) * 100) 
@@ -147,6 +175,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
       <AnimatePresence>
         {showDailyReward && (
           <motion.div
+            key="daily-reward-modal"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -185,7 +214,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 
               <button
                 onClick={onClaimDailyReward}
-                className="w-full h-14 bg-gradient-to-b from-amber-400 to-amber-600 rounded-xl border-b-[4px] border-amber-700 text-amber-950 font-black text-lg tracking-widest uppercase shadow-lg active:scale-95 active:border-b-0 active:translate-y-[4px] transition-all z-10"
+                className="relative w-full h-14 bg-gradient-to-b from-amber-400 to-amber-600 rounded-xl border-b-[4px] border-amber-700 text-amber-950 font-black text-lg tracking-widest uppercase shadow-lg active:scale-95 active:border-b-0 active:translate-y-[4px] transition-all z-10"
               >
                 Claim
               </button>
@@ -237,7 +266,30 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
             {/* Main Actions */}
             <div className="w-full flex flex-col gap-5 px-2">
               <AnimatePresence mode="wait">
-                {isSelecting ? (
+                {isMatchmaking ? (
+                  <motion.div
+                    key="matchmaking"
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    className="w-full h-44 rounded-3xl bg-gradient-to-b from-[#1e3a8a] to-black border-4 border-[#1e40af] flex flex-col items-center justify-center p-6 relative overflow-hidden shadow-[0_0_50px_rgba(37,99,235,0.2)]"
+                  >
+                    <motion.div 
+                      animate={{ rotate: 360 }} 
+                      transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                      className="absolute -inset-20 bg-[conic-gradient(from_0deg,transparent_0_340deg,rgba(59,130,246,0.4)_360deg)] rounded-full blur-2xl"
+                    />
+                    
+                    <span className="text-xs font-black text-blue-400 uppercase tracking-widest mb-4 z-10 flex items-center gap-2">
+                       <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>•</motion.span>
+                       Finding Opponent
+                       <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ duration: 1.5, repeat: Infinity, delay: 0.75 }}>•</motion.span>
+                    </span>
+                    
+                    <div className="h-16 flex items-center justify-center w-full relative z-10 overflow-hidden">
+                       <User className="w-12 h-12 text-blue-300 drop-shadow-md animate-pulse" />
+                    </div>
+                  </motion.div>
+                ) : isSelecting ? (
                   <motion.div
                     key="selecting"
                     initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -309,7 +361,27 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                        >
                          <Play className="w-10 h-10 fill-white drop-shadow-lg z-10" />
                        </motion.div>
-                       <span className="text-4xl font-black tracking-widest uppercase drop-shadow-lg z-10 italic">PLAY NOW</span>
+                       
+                       <div className="flex flex-col items-start z-10 relative">
+                         <span className="text-3xl font-black italic tracking-wider drop-shadow-md">PLAY NOW</span>
+                         <span className="text-xs font-bold text-emerald-100 uppercase tracking-[0.2em]">VS. AI / Pass & Play</span>
+                       </div>
+                    </motion.button>
+
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        soundFx.playClick();
+                        setIsMatchmaking(true);
+                        socketService.connect();
+                        socketService.emit('join_matchmaking');
+                      }}
+                      className="w-full h-16 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-700 border-b-[6px] border-blue-900 text-white flex items-center justify-center gap-3 relative overflow-hidden shadow-lg"
+                    >
+                       <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-2xl" />
+                       <User className="w-6 h-6 fill-white drop-shadow-md" />
+                       <span className="text-xl font-black italic tracking-widest drop-shadow-md uppercase">Multiplayer</span>
                     </motion.button>
 
                     <div className="grid grid-cols-2 gap-4">

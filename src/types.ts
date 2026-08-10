@@ -69,7 +69,7 @@ export interface Ground {
   pitchHex: string;
 }
 
-export type GameMode = 'VS_AI' | 'PASS_AND_PLAY' | 'TOURNAMENT';
+export type GameMode = 'VS_AI' | 'PASS_AND_PLAY' | 'TOURNAMENT' | 'MULTIPLAYER';
 
 export interface GameSettings {
   maxOvers: number; // Default 5

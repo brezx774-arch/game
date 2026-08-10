@@ -15,6 +15,7 @@ import {
 } from './types';
 import { BOARD_TILES } from './utils/boardData';
 import { soundFx } from './utils/audio';
+import { socketService } from './utils/socket';
 
 import { Header } from './components/Header';
 import { Scoreboard } from './components/Scoreboard';
@@ -86,6 +87,12 @@ export default function App() {
     aiDifficulty: 'MEDIUM',
   });
 
+  // Multiplayer State
+  const [multiplayerRoomId, setMultiplayerRoomId] = useState<string | null>(null);
+  const [multiplayerOpponentId, setMultiplayerOpponentId] = useState<string | null>(null);
+  const [myPlayerId, setMyPlayerId] = useState<string>('YOU');
+  const [opponentPlayerId, setOpponentPlayerId] = useState<string>('AI');
+
   // Game Modals
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -130,7 +137,7 @@ export default function App() {
   const [currentStrike, setCurrentStrike] = useState<'YOU' | 'AI'>('YOU');
   const [phase, setPhase] = useState<GamePhase>('INNINGS_1');
   const [targetRuns, setTargetRuns] = useState<number | undefined>(undefined);
-  const [currentTileIndex, setCurrentTileIndex] = useState<number>(14); // Landed on FH at bottom right
+  const [currentTileIndex, setCurrentTileIndex] = useState<number>(1);
   const [selectedTactic, setSelectedTactic] = useState<TacticMode>('ROTATE');
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [isFreeHit, setIsFreeHit] = useState<boolean>(false);
@@ -198,7 +205,7 @@ export default function App() {
   }, [lastLoginDate, dailyStreak]);
 
   const claimDailyReward = () => {
-    soundFx.playCoins();
+    soundFx.playPowerplayChime();
     setCoins(c => c + dailyRewardAmount);
     setShowDailyReward(false);
   };
@@ -253,30 +260,51 @@ export default function App() {
     setCurrentStrike('YOU');
     setPhase('INNINGS_1');
     setTargetRuns(undefined);
-    setCurrentTileIndex(0);
+    setCurrentTileIndex(1);
     setIsFreeHit(false);
     setCommentaryMsg('Match started! Select your shot tactic and ROLL to begin.');
     setCommentarySubMsg('Powerplay active! Overs 1 & 2 double all run outcomes!');
   };
 
   // Main Dice Roll Handler
-  const handleRoll = useCallback(() => {
+  const handleRoll = useCallback((forcedRoll?: number, forcedTactic?: TacticMode) => {
     if (isRolling || phase === 'MATCH_OVER') return;
 
     setIsRolling(true);
     soundFx.playDiceRoll();
 
+    // Use forced tactic from opponent if provided, else use local selectedTactic
+    const activeTactic = forcedTactic || selectedTactic;
+
     // Determine dice roll value based on shot tactic
     let roll = 1;
-    if (selectedTactic === 'DEFEND') {
-      const defendOpts = [1, 1, 2, 2, 3];
-      roll = defendOpts[Math.floor(Math.random() * defendOpts.length)];
-    } else if (selectedTactic === 'ROTATE') {
-      const rotateOpts = [1, 2, 3, 4];
-      roll = rotateOpts[Math.floor(Math.random() * rotateOpts.length)];
-    } else { // ATTACK
-      const attackOpts = [2, 3, 4, 5, 6];
-      roll = attackOpts[Math.floor(Math.random() * attackOpts.length)];
+    if (forcedRoll !== undefined) {
+      roll = forcedRoll;
+    } else {
+      if (activeTactic === 'DEFEND') {
+        const defendOpts = [1, 1, 2, 2, 3];
+        roll = defendOpts[Math.floor(Math.random() * defendOpts.length)];
+      } else if (activeTactic === 'ROTATE') {
+        const rotateOpts = [1, 2, 3, 4];
+        roll = rotateOpts[Math.floor(Math.random() * rotateOpts.length)];
+      } else { // ATTACK
+        const attackOpts = [2, 3, 4, 5, 6];
+        roll = attackOpts[Math.floor(Math.random() * attackOpts.length)];
+      }
+    }
+
+    // In multiplayer, if it's our strike and we didn't receive a forced roll, emit our action
+    if (settings.mode === 'MULTIPLAYER' && currentStrike === 'YOU' && forcedRoll === undefined) {
+      if (multiplayerRoomId) {
+        socketService.emit('player_action', {
+          roomId: multiplayerRoomId,
+          action: 'ROLL',
+          payload: {
+            roll,
+            tactic: activeTactic
+          }
+        });
+      }
     }
 
     setDiceVal(roll);
@@ -295,12 +323,12 @@ export default function App() {
       setIsRolling(false);
 
       // Process Tile Outcome
-      resolveOutcome(landedTile, roll);
+      resolveOutcome(landedTile, roll, activeTactic);
     }, 700);
-  }, [currentTileIndex, isRolling, phase, selectedTactic]);
+  }, [currentTileIndex, isRolling, phase, selectedTactic, settings.mode, currentStrike, multiplayerRoomId]);
 
   // Resolve outcome of the landed tile
-  const resolveOutcome = (tile: BoardTile, rollVal: number) => {
+  const resolveOutcome = (tile: BoardTile, rollVal: number, activeTactic: TacticMode) => {
     let runsEarned = 0;
     let isWicketOut = false;
     let isWide = false;
@@ -389,7 +417,7 @@ export default function App() {
           soundFx.playBatHit(false);
         } else {
           // 50% catch probability unless DEFEND tactic
-          const catchProb = selectedTactic === 'DEFEND' ? 0.2 : selectedTactic === 'ATTACK' ? 0.7 : 0.4;
+          const catchProb = activeTactic === 'DEFEND' ? 0.2 : activeTactic === 'ATTACK' ? 0.7 : 0.4;
           if (Math.random() < catchProb) {
             isWicketOut = true;
             cMsg = `OUT! High ball taken cleanly by the fielder!`;
@@ -581,6 +609,35 @@ export default function App() {
     });
   };
 
+  // Multiplayer Opponent Action Listener
+  useEffect(() => {
+    if (settings.mode === 'MULTIPLAYER') {
+      const handleOpponentAction = (data: { action: string, payload: any }) => {
+        if (data.action === 'ROLL') {
+          const { roll, tactic } = data.payload;
+          setSelectedTactic(tactic);
+          handleRoll(roll, tactic);
+        }
+      };
+      
+      const handleOpponentDisconnected = () => {
+        setPhase('MATCH_OVER');
+        setCommentaryMsg('Opponent disconnected.');
+        setCommentarySubMsg('You win by default!');
+        setCoins(c => c + 150);
+        setXp(x => x + 200);
+      };
+
+      socketService.on('opponent_action', handleOpponentAction);
+      socketService.on('opponent_disconnected', handleOpponentDisconnected);
+
+      return () => {
+        socketService.off('opponent_action', handleOpponentAction);
+        socketService.off('opponent_disconnected', handleOpponentDisconnected);
+      };
+    }
+  }, [settings.mode, handleRoll]);
+
   // AI Turn Auto-play Trigger
   useEffect(() => {
     if (phase !== 'MATCH_OVER' && currentStrike === 'AI' && settings.mode === 'VS_AI' && !isRolling) {
@@ -603,9 +660,57 @@ export default function App() {
 
       {activeScreen === 'LOBBY' ? (
         <LobbyScreen 
-          onStart={(ground) => {
+          onStart={(ground, mode) => {
             setSelectedGround(ground);
+            if (mode) {
+              setSettings(prev => ({ ...prev, mode }));
+            } else {
+              setSettings(prev => ({ ...prev, mode: 'VS_AI' }));
+            }
             handleRestartMatch();
+            setActiveScreen('GAME');
+          }}
+          onStartMultiplayer={(roomId, firstStrikerId, opponentId) => {
+            setMultiplayerRoomId(roomId);
+            setMultiplayerOpponentId(opponentId);
+            setMyPlayerId(socketService.socket?.id || 'YOU');
+            setOpponentPlayerId(opponentId);
+            
+            // Randomly select stadium for multiplayer
+            const randomGround = STADIUMS[Math.floor(Math.random() * STADIUMS.length)];
+            setSelectedGround(randomGround);
+            setSettings(prev => ({ ...prev, mode: 'MULTIPLAYER' }));
+
+            setYouState({
+              name: 'YOU',
+              avatar: 'helmet',
+              runs: 0,
+              wickets: 0,
+              overs: 0.0,
+              ballsBowled: 0,
+              history: [],
+              fourCount: 0,
+              sixCount: 0,
+              dotsCount: 0,
+            });
+            setAiState({
+              name: 'OPPONENT',
+              avatar: 'robot', // maybe change to generic player avatar later
+              runs: 0,
+              wickets: 0,
+              overs: 0.0,
+              ballsBowled: 0,
+              history: [],
+              fourCount: 0,
+              sixCount: 0,
+              dotsCount: 0,
+            });
+
+            setPhase('INNINGS_1');
+            setCurrentStrike(socketService.socket?.id === firstStrikerId ? 'YOU' : 'AI');
+            setTargetRuns(undefined);
+            setCommentaryMsg('Match started!');
+            setCommentarySubMsg('First to bat is selected.');
             setActiveScreen('GAME');
           }}
           onOpenSettings={() => setIsSettingsOpen(true)}
@@ -670,9 +775,9 @@ export default function App() {
           <ActionControls
             selectedTactic={selectedTactic}
             onSelectTactic={setSelectedTactic}
-            onRoll={handleRoll}
+            onRoll={() => handleRoll()}
             isRolling={isRolling}
-            disabled={phase === 'MATCH_OVER' || (currentStrike === 'AI' && settings.mode === 'VS_AI')}
+            disabled={phase === 'MATCH_OVER' || (currentStrike === 'AI' && (settings.mode === 'VS_AI' || settings.mode === 'MULTIPLAYER'))}
           />
         </div>
       )}
