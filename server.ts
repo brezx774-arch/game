@@ -18,6 +18,7 @@ async function startServer() {
 
   // Basic Matchmaking Logic
   const waitingPlayers: Socket[] = [];
+  const customRooms: Record<string, Socket[]> = {};
 
   io.on('connection', (socket) => {
     console.log(`Player connected: ${socket.id}`);
@@ -52,6 +53,56 @@ async function startServer() {
         socket.emit('waiting_for_opponent');
       }
     });
+
+    socket.on('create_room', () => {
+      const roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+      customRooms[roomCode] = [socket];
+      socket.join(roomCode);
+      socket.emit('room_created', { roomCode });
+      console.log(`Player ${socket.id} created room ${roomCode}`);
+    });
+
+    socket.on('join_room', (data) => {
+      const { roomCode } = data;
+      if (customRooms[roomCode] && customRooms[roomCode].length === 1) {
+        const opponent = customRooms[roomCode][0];
+        customRooms[roomCode].push(socket);
+        socket.join(roomCode);
+        
+        // Match found!
+        io.to(roomCode).emit('match_found', {
+          roomId: roomCode,
+          players: [opponent.id, socket.id]
+        });
+
+        // Randomly decide who bats first
+        const firstStriker = Math.random() > 0.5 ? opponent.id : socket.id;
+        io.to(roomCode).emit('match_start', {
+          firstStriker
+        });
+        
+        console.log(`Player ${socket.id} joined room ${roomCode}`);
+        delete customRooms[roomCode]; // Remove from joinable list
+      } else {
+        socket.emit('room_error', { message: 'Room not found or full' });
+      }
+    });
+
+    socket.on('cancel_matchmaking', () => {
+      const index = waitingPlayers.indexOf(socket);
+      if (index !== -1) {
+        waitingPlayers.splice(index, 1);
+      }
+      
+      for (const code in customRooms) {
+        if (customRooms[code].includes(socket)) {
+          customRooms[code] = customRooms[code].filter(s => s !== socket);
+          if (customRooms[code].length === 0) {
+            delete customRooms[code];
+          }
+        }
+      }
+    });
     
     // Pass actions to the other player in the room
     socket.on('player_action', (data) => {
@@ -66,6 +117,16 @@ async function startServer() {
       if (index !== -1) {
         waitingPlayers.splice(index, 1);
       }
+      
+      for (const code in customRooms) {
+        if (customRooms[code].includes(socket)) {
+          customRooms[code] = customRooms[code].filter(s => s !== socket);
+          if (customRooms[code].length === 0) {
+            delete customRooms[code];
+          }
+        }
+      }
+
       // Optional: Inform other players in rooms about the disconnect
       socket.rooms.forEach((roomId) => {
          socket.to(roomId).emit('opponent_disconnected');

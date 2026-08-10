@@ -46,6 +46,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   const [activeTab, setActiveTab] = useState<'HOME' | 'PROFILE' | 'STORE'>('HOME');
   const [isSelecting, setIsSelecting] = useState(false);
   const [isMatchmaking, setIsMatchmaking] = useState(false);
+  const [createdRoomCode, setCreatedRoomCode] = useState<string | null>(null);
   const [rouletteIndex, setRouletteIndex] = useState(0);
 
   useEffect(() => {
@@ -60,15 +61,22 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 
     const handleMatchStart = (data: { firstStriker: string }) => {
       setIsMatchmaking(false);
+      setCreatedRoomCode(null);
       onStartMultiplayer(currentRoomId, data.firstStriker, currentOpponentId);
+    };
+
+    const handleRoomCreated = (data: { roomCode: string }) => {
+      setCreatedRoomCode(data.roomCode);
     };
 
     socketService.on('match_found', handleMatchFound);
     socketService.on('match_start', handleMatchStart);
+    socketService.on('room_created', handleRoomCreated);
 
     return () => {
       socketService.off('match_found', handleMatchFound);
       socketService.off('match_start', handleMatchStart);
+      socketService.off('room_created', handleRoomCreated);
     };
   }, [onStartMultiplayer]);
 
@@ -281,13 +289,31 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     
                     <span className="text-xs font-black text-blue-400 uppercase tracking-widest mb-4 z-10 flex items-center gap-2">
                        <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>•</motion.span>
-                       Finding Opponent
+                       {createdRoomCode ? 'Waiting for Player' : 'Finding Opponent'}
                        <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ duration: 1.5, repeat: Infinity, delay: 0.75 }}>•</motion.span>
                     </span>
                     
                     <div className="h-16 flex items-center justify-center w-full relative z-10 overflow-hidden">
-                       <User className="w-12 h-12 text-blue-300 drop-shadow-md animate-pulse" />
+                       {createdRoomCode ? (
+                         <div className="flex flex-col items-center">
+                           <span className="text-[10px] text-blue-200 uppercase tracking-widest">Room Code</span>
+                           <span className="text-3xl font-black text-white tracking-[0.2em] drop-shadow-md">{createdRoomCode}</span>
+                         </div>
+                       ) : (
+                         <User className="w-12 h-12 text-blue-300 drop-shadow-md animate-pulse" />
+                       )}
                     </div>
+                    
+                    <button 
+                      onClick={() => {
+                        setIsMatchmaking(false);
+                        setCreatedRoomCode(null);
+                        socketService.emit('cancel_matchmaking');
+                      }}
+                      className="mt-4 z-10 text-xs text-blue-300/60 hover:text-blue-200 underline underline-offset-4"
+                    >
+                      Cancel
+                    </button>
                   </motion.div>
                 ) : isSelecting ? (
                   <motion.div
@@ -368,30 +394,71 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                        </div>
                     </motion.button>
 
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        soundFx.playClick();
-                        setIsMatchmaking(true);
-                        socketService.connect();
-                        socketService.emit('join_matchmaking');
-                      }}
-                      className="w-full h-16 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-700 border-b-[6px] border-blue-900 text-white flex items-center justify-center gap-3 relative overflow-hidden shadow-lg"
-                    >
-                       <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-2xl" />
-                       <User className="w-6 h-6 fill-white drop-shadow-md" />
-                       <span className="text-xl font-black italic tracking-widest drop-shadow-md uppercase">Multiplayer</span>
-                    </motion.button>
+                    <div className="w-full flex flex-col gap-3 mt-4">
+                      <span className="text-[10px] font-black text-stone-400 tracking-widest uppercase ml-2 text-left">Multiplayer</span>
+                      
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          soundFx.playClick();
+                          setIsMatchmaking(true);
+                          socketService.connect();
+                          socketService.emit('join_matchmaking');
+                        }}
+                        className="w-full h-14 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-700 border-b-[6px] border-blue-900 text-white flex items-center justify-center gap-3 relative overflow-hidden shadow-lg"
+                      >
+                         <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-2xl" />
+                         <User className="w-5 h-5 fill-white drop-shadow-md" />
+                         <span className="text-lg font-black italic tracking-widest drop-shadow-md uppercase">Find Match</span>
+                      </motion.button>
 
-                    <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => {
+                            soundFx.playClick();
+                            setIsMatchmaking(true);
+                            socketService.connect();
+                            socketService.emit('create_room');
+                          }}
+                          className="h-14 rounded-2xl bg-gradient-to-b from-purple-500 to-purple-700 border-b-[6px] border-purple-900 text-white flex items-center justify-center gap-2 relative overflow-hidden shadow-lg"
+                        >
+                          <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-2xl" />
+                          <span className="text-sm font-black tracking-widest uppercase">Create Room</span>
+                        </motion.button>
+                        
+                        <div className="relative flex flex-col h-14">
+                          <input 
+                            type="text" 
+                            placeholder="CODE"
+                            maxLength={4}
+                            className="absolute inset-0 w-full h-full rounded-2xl bg-stone-900 border-2 border-stone-700 text-center text-white font-black tracking-widest uppercase outline-none focus:border-purple-500 z-10 transition-colors"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const code = (e.target as HTMLInputElement).value;
+                                if (code.length === 4) {
+                                  soundFx.playClick();
+                                  setIsMatchmaking(true);
+                                  socketService.connect();
+                                  socketService.emit('join_room', { roomCode: code });
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mt-2">
                       <motion.button
                         whileTap={{ scale: 0.95 }}
-                        className="h-20 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-black text-stone-200 flex flex-col items-center justify-center gap-1.5 shadow-xl relative overflow-hidden opacity-50 cursor-not-allowed"
+                        className="h-16 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-black text-stone-200 flex flex-col items-center justify-center gap-1 shadow-xl relative overflow-hidden opacity-50 cursor-not-allowed"
                       >
                          <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/5 rounded-t-2xl" />
-                         <Trophy className="w-6 h-6 text-[#facc15] drop-shadow-sm" />
-                         <span className="text-[10px] font-black tracking-widest uppercase">Leaderboard</span>
+                         <Trophy className="w-5 h-5 text-[#facc15] drop-shadow-sm" />
+                         <span className="text-[9px] font-black tracking-widest uppercase">Leaderboard</span>
                       </motion.button>
 
                       <motion.button
@@ -401,11 +468,11 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                           soundFx.playClick();
                           onOpenSettings();
                         }}
-                        className="h-20 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-black text-stone-200 flex flex-col items-center justify-center gap-1.5 shadow-xl relative overflow-hidden group"
+                        className="h-16 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-black text-stone-200 flex flex-col items-center justify-center gap-1 shadow-xl relative overflow-hidden group"
                       >
                          <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/5 rounded-t-2xl group-hover:bg-white/10 transition-colors" />
-                         <Settings className="w-6 h-6 text-stone-400 group-hover:rotate-90 transition-transform duration-500" />
-                         <span className="text-[10px] font-black tracking-widest uppercase">Settings</span>
+                         <Settings className="w-5 h-5 text-stone-400 group-hover:rotate-90 transition-transform duration-500" />
+                         <span className="text-[9px] font-black tracking-widest uppercase">Settings</span>
                       </motion.button>
                     </div>
                   </motion.div>
