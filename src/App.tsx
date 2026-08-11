@@ -291,6 +291,9 @@ export default function App() {
     setIsFreeHit(false);
     setCommentaryMsg('Match started! Select your shot tactic and ROLL to begin.');
     setCommentarySubMsg('Powerplay active! Overs 1 & 2 double all run outcomes!');
+    setMyTurnAction(null);
+    setOpponentTurnAction(null);
+    setTurnTimer(10);
   };
 
 
@@ -354,28 +357,32 @@ export default function App() {
     }
   }, [activeScreen, phase, settings.mode, currentStrike, opponentTurnAction]);
 
-  // Turn timer countdown and auto-roll
+    // Turn timer countdown and auto-roll
   useEffect(() => {
     if (activeScreen !== 'GAME' || phase === 'MATCH_OVER' || isRolling) return;
     
     if (myTurnAction && opponentTurnAction) return;
 
     const timer = setInterval(() => {
-      setTurnTimer(prev => {
-        if (prev <= 1) {
-           clearInterval(timer);
-           // Auto-submit if haven't
-           if (!myTurnAction) {
-               const defaultTactic = currentStrike === 'YOU' ? 'ROTATE' : 'FAST';
-               handleActionSubmit(defaultTactic);
-           }
-           return 0;
-        }
-        return prev - 1;
-      });
+      setTurnTimer(prev => prev - 1);
     }, 1000);
     return () => clearInterval(timer);
-  }, [activeScreen, phase, isRolling, myTurnAction, opponentTurnAction, currentStrike, handleActionSubmit]);
+  }, [activeScreen, phase, isRolling, myTurnAction, opponentTurnAction]);
+
+  // Handle timer actions
+  useEffect(() => {
+    if (activeScreen !== 'GAME' || phase === 'MATCH_OVER' || isRolling) return;
+    
+    if (turnTimer === 0 && !myTurnAction) {
+       const defaultTactic = currentStrike === 'YOU' ? 'ROTATE' : 'FAST';
+       handleActionSubmit(defaultTactic);
+    } else if (turnTimer < -4 && settings.mode === 'MULTIPLAYER' && myTurnAction && !opponentTurnAction) {
+       setSettings(s => ({ ...s, mode: 'VS_AI' }));
+       setCommentaryMsg('Opponent timed out.');
+       setCommentarySubMsg('AI took over!');
+       setTurnTimer(0);
+    }
+  }, [turnTimer, myTurnAction, opponentTurnAction, activeScreen, phase, isRolling, currentStrike, handleActionSubmit, settings.mode]);
 
   // Resolve both actions when ready
   useEffect(() => {
@@ -403,6 +410,7 @@ export default function App() {
         setMyTurnAction(null);
         setOpponentTurnAction(null);
         setTurnTimer(10);
+        setIsRolling(false);
       }, 2000); // Extended a bit to see both actions resolved
     }
   }, [myTurnAction, opponentTurnAction, isRolling, activeScreen, phase, currentTileIndex, currentStrike]);
@@ -759,15 +767,15 @@ export default function App() {
             setIsBotToss(true);
             setActiveScreen('TOSS');
           }}
-          onStartMultiplayer={(roomId, firstStrikerId, opponentId, opponentName, isBot) => {
+          onStartMultiplayer={(roomId, firstStrikerId, opponentId, opponentName, isBot, groundIndex) => {
             setMultiplayerRoomId(roomId);
             setMultiplayerOpponentId(opponentId);
             setMyPlayerId(socketService.socket?.id || 'YOU');
             setOpponentPlayerId(opponentId);
             
-            // Randomly select stadium for multiplayer
-            const randomGround = STADIUMS[Math.floor(Math.random() * STADIUMS.length)];
-            setSelectedGround(randomGround);
+            // Select stadium synced from server
+            const syncedGround = (groundIndex !== undefined && STADIUMS[groundIndex]) ? STADIUMS[groundIndex] : STADIUMS[Math.floor(Math.random() * STADIUMS.length)];
+            setSelectedGround(syncedGround);
             setSettings(prev => ({ ...prev, mode: isBot ? 'VS_AI' : 'MULTIPLAYER' }));
 
             setYouState({

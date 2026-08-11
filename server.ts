@@ -43,8 +43,10 @@ async function startServer() {
           
           // Randomly decide who bats first
           const firstStriker = Math.random() > 0.5 ? socket.id : opponent.id;
+          const groundIndex = Math.floor(Math.random() * 5);
           io.to(roomId).emit('match_start', {
-            firstStriker
+            firstStriker,
+            groundIndex
           });
         }
       } else {
@@ -71,8 +73,10 @@ async function startServer() {
             });
             
             const firstStriker = Math.random() > 0.5 ? socket.id : fakeOpponentId;
+            const groundIndex = Math.floor(Math.random() * 5);
             socket.emit('match_start', {
-              firstStriker
+              firstStriker,
+              groundIndex
             });
           }
         }, 4000);
@@ -102,8 +106,10 @@ async function startServer() {
 
         // Randomly decide who bats first
         const firstStriker = Math.random() > 0.5 ? opponent.id : socket.id;
+        const groundIndex = Math.floor(Math.random() * 5);
         io.to(roomCode).emit('match_start', {
-          firstStriker
+          firstStriker,
+          groundIndex
         });
         
         console.log(`Player ${socket.id} joined room ${roomCode}`);
