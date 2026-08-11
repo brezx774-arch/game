@@ -1,4 +1,4 @@
-export type TacticMode = 'DEFEND' | 'ROTATE' | 'ATTACK';
+export type TacticMode = 'DEFEND' | 'ROTATE' | 'ATTACK' | 'FAST' | 'SPIN' | 'YORKER';
 
 export type TileType = 
   | 'RUN_1' 

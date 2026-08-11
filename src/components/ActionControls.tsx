@@ -5,6 +5,7 @@ import { soundFx } from "../utils/audio";
 import { motion } from "motion/react";
 
 interface ActionControlsProps {
+  isBatting: boolean;
   selectedTactic: TacticMode;
   onSelectTactic: (tactic: TacticMode) => void;
   onRoll: () => void;
@@ -22,6 +23,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
   disabled,
   onSendEmoji,
   showEmoji,
+  isBatting,
 }) => {
   const [isEmojiMenuOpen, setIsEmojiMenuOpen] = React.useState(false);
   const EMOJIS = ['😂', '😎', '😡', '😭', '🔥', '👎'];
@@ -71,7 +73,10 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
             </span>
           </div>
 
+          
           <div className="flex gap-2">
+            {isBatting ? (
+              <>
             {/* DEFEND */}
             <motion.button
               whileTap={{ scale: 0.9, y: 4 }}
@@ -86,24 +91,9 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                   : "bg-[#1e293b] border-[#0f172a] text-[#94a3b8] hover:bg-[#334155]"
               } ${disabled || isRolling ? "opacity-50 grayscale" : ""}`}
             >
-              {selectedTactic === "DEFEND" && (
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.3),transparent)] pointer-events-none" />
-              )}
-              <Shield
-                className={`w-5 h-5 mb-1 ${selectedTactic === "DEFEND" ? "text-blue-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] fill-blue-800/20" : ""}`}
-              />
-              <div className="relative">
-                {selectedTactic === "DEFEND" && (
-                   <span className="absolute left-0 top-0 text-[10px] font-black tracking-wider uppercase text-blue-950 blur-[1px] translate-y-[1px]">
-                     DEFEND
-                   </span>
-                )}
-                <span className={`relative text-[10px] font-black tracking-wider uppercase ${selectedTactic === "DEFEND" ? "text-transparent bg-clip-text bg-gradient-to-b from-white via-blue-100 to-blue-300 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]" : ""}`}>
-                  DEFEND
-                </span>
-              </div>
+              <Shield className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-black uppercase">DEFEND</span>
             </motion.button>
-
             {/* ROTATE */}
             <motion.button
               whileTap={{ scale: 0.9, y: 4 }}
@@ -118,24 +108,9 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                   : "bg-[#1e293b] border-[#0f172a] text-[#94a3b8] hover:bg-[#334155]"
               } ${disabled || isRolling ? "opacity-50 grayscale" : ""}`}
             >
-              {selectedTactic === "ROTATE" && (
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.3),transparent)] pointer-events-none" />
-              )}
-              <motion.div animate={selectedTactic === "ROTATE" ? { rotate: 360 } : {}} transition={{ duration: 4, repeat: Infinity, ease: "linear" }}>
-                <RotateCw className={`w-5 h-5 mb-1 ${selectedTactic === "ROTATE" ? "text-emerald-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" : ""}`} />
-              </motion.div>
-              <div className="relative">
-                {selectedTactic === "ROTATE" && (
-                   <span className="absolute left-0 top-0 text-[10px] font-black tracking-wider uppercase text-emerald-950 blur-[1px] translate-y-[1px]">
-                     ROTATE
-                   </span>
-                )}
-                <span className={`relative text-[10px] font-black tracking-wider uppercase ${selectedTactic === "ROTATE" ? "text-transparent bg-clip-text bg-gradient-to-b from-white via-emerald-100 to-emerald-300 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]" : ""}`}>
-                  ROTATE
-                </span>
-              </div>
+              <RotateCw className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-black uppercase">ROTATE</span>
             </motion.button>
-
             {/* ATTACK */}
             <motion.button
               whileTap={{ scale: 0.9, y: 4 }}
@@ -150,24 +125,67 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                   : "bg-[#1e293b] border-[#0f172a] text-[#94a3b8] hover:bg-[#334155]"
               } ${disabled || isRolling ? "opacity-50 grayscale" : ""}`}
             >
-              {selectedTactic === "ATTACK" && (
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.3),transparent)] pointer-events-none" />
-              )}
-              <svg className={`w-5 h-5 mb-1 fill-current ${selectedTactic === "ATTACK" ? "text-amber-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" : ""}`} viewBox="0 0 24 24">
-                <path d="M19.7 3.3a1 1 0 0 0-1.4 0l-12 12a1 1 0 0 0 0 1.4l2 2a1 1 0 0 0 1.4 0l12-12a1 1 0 0 0 0-1.4l-2-2zM3 21l3-3-1.4-1.4L1.6 19.6a1 1 0 0 0 0 1.4l0 0a1 1 0 0 0 1.4 0z" />
-              </svg>
-              <div className="relative">
-                {selectedTactic === "ATTACK" && (
-                   <span className="absolute left-0 top-0 text-[10px] font-black tracking-wider uppercase text-amber-950 blur-[1px] translate-y-[1px]">
-                     ATTACK
-                   </span>
-                )}
-                <span className={`relative text-[10px] font-black tracking-wider uppercase ${selectedTactic === "ATTACK" ? "text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-100 to-amber-300 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]" : ""}`}>
-                  ATTACK
-                </span>
-              </div>
+              <svg className="w-5 h-5 mb-1 fill-current" viewBox="0 0 24 24"><path d="M19.7 3.3a1 1 0 0 0-1.4 0l-12 12a1 1 0 0 0 0 1.4l2 2a1 1 0 0 0 1.4 0l12-12a1 1 0 0 0 0-1.4l-2-2zM3 21l3-3-1.4-1.4L1.6 19.6a1 1 0 0 0 0 1.4l0 0a1 1 0 0 0 1.4 0z" /></svg>
+              <span className="text-[10px] font-black uppercase">ATTACK</span>
             </motion.button>
+            </>
+            ) : (
+            <>
+            {/* FAST */}
+            <motion.button
+              whileTap={{ scale: 0.9, y: 4 }}
+              disabled={disabled || isRolling}
+              onClick={() => {
+                soundFx.playClick();
+                onSelectTactic("FAST");
+              }}
+              className={`flex-1 relative flex flex-col items-center justify-center p-2 rounded-xl border-b-4 transition-all overflow-hidden ${
+                selectedTactic === "FAST"
+                  ? "bg-gradient-to-b from-[#ef4444] to-[#b91c1c] border-[#7f1d1d] text-white shadow-[0_0_20px_rgba(239,68,68,0.6)]"
+                  : "bg-[#1e293b] border-[#0f172a] text-[#94a3b8] hover:bg-[#334155]"
+              } ${disabled || isRolling ? "opacity-50 grayscale" : ""}`}
+            >
+              <span className="text-sm mb-1">🔥</span>
+              <span className="text-[10px] font-black uppercase">FAST</span>
+            </motion.button>
+            {/* SPIN */}
+            <motion.button
+              whileTap={{ scale: 0.9, y: 4 }}
+              disabled={disabled || isRolling}
+              onClick={() => {
+                soundFx.playClick();
+                onSelectTactic("SPIN");
+              }}
+              className={`flex-1 relative flex flex-col items-center justify-center p-2 rounded-xl border-b-4 transition-all overflow-hidden ${
+                selectedTactic === "SPIN"
+                  ? "bg-gradient-to-b from-[#8b5cf6] to-[#6d28d9] border-[#4c1d95] text-white shadow-[0_0_20px_rgba(139,92,246,0.6)]"
+                  : "bg-[#1e293b] border-[#0f172a] text-[#94a3b8] hover:bg-[#334155]"
+              } ${disabled || isRolling ? "opacity-50 grayscale" : ""}`}
+            >
+              <span className="text-sm mb-1">🌪️</span>
+              <span className="text-[10px] font-black uppercase">SPIN</span>
+            </motion.button>
+            {/* YORKER */}
+            <motion.button
+              whileTap={{ scale: 0.9, y: 4 }}
+              disabled={disabled || isRolling}
+              onClick={() => {
+                soundFx.playClick();
+                onSelectTactic("YORKER");
+              }}
+              className={`flex-1 relative flex flex-col items-center justify-center p-2 rounded-xl border-b-4 transition-all overflow-hidden ${
+                selectedTactic === "YORKER"
+                  ? "bg-gradient-to-b from-[#14b8a6] to-[#0f766e] border-[#134e4a] text-white shadow-[0_0_20px_rgba(20,184,166,0.6)]"
+                  : "bg-[#1e293b] border-[#0f172a] text-[#94a3b8] hover:bg-[#334155]"
+              } ${disabled || isRolling ? "opacity-50 grayscale" : ""}`}
+            >
+              <span className="text-sm mb-1">🎯</span>
+              <span className="text-[10px] font-black uppercase">YORKER</span>
+            </motion.button>
+            </>
+            )}
           </div>
+
         </div>
 
         {/* Giant ROLL Button */}
@@ -192,13 +210,13 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
             <div className="relative z-10 flex items-center justify-center gap-2 h-full w-full">
               <div className="relative">
                  <span className="absolute left-0 top-0 text-3xl font-black tracking-widest text-black/40 blur-sm translate-y-1">
-                    {isRolling ? "ROLLING" : "ROLL!"}
+                    {isRolling ? "WAITING" : (isBatting ? "BAT!" : "BOWL!")}
                  </span>
                  <span className="absolute left-0 top-0 text-3xl font-black tracking-widest text-red-950" style={{ WebkitTextStroke: '6px #450a0a' }}>
-                    {isRolling ? "ROLLING" : "ROLL!"}
+                    {isRolling ? "WAITING" : (isBatting ? "BAT!" : "BOWL!")}
                  </span>
                  <span className="relative text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-b from-white via-red-100 to-red-300 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-                    {isRolling ? "ROLLING" : "ROLL!"}
+                    {isRolling ? "WAITING" : (isBatting ? "BAT!" : "BOWL!")}
                  </span>
               </div>
             </div>

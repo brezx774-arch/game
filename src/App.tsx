@@ -148,6 +148,11 @@ export default function App() {
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [isFreeHit, setIsFreeHit] = useState<boolean>(false);
 
+  const [turnTimer, setTurnTimer] = useState<number>(10);
+  const [myTurnAction, setMyTurnAction] = useState<{tactic: TacticMode, roll: number} | null>(null);
+  const [opponentTurnAction, setOpponentTurnAction] = useState<{tactic: TacticMode, roll: number} | null>(null);
+
+
   // Dice Modal state
   const [showDiceModal, setShowDiceModal] = useState<boolean>(false);
   const [diceVal, setDiceVal] = useState<number>(3);
@@ -224,9 +229,9 @@ export default function App() {
 
   // Sync Mute state
   const handleToggleMute = () => {
-    const newMuted = !settings.soundEnabled;
-    setSettings((prev) => ({ ...prev, soundEnabled: !newMuted }));
-    soundFx.setMuted(newMuted);
+    const willBeMuted = settings.soundEnabled;
+    setSettings((prev) => ({ ...prev, soundEnabled: !willBeMuted }));
+    soundFx.setMuted(willBeMuted);
   };
 
   // Helper: check powerplay status (Overs 1 & 2 are powerplays)
@@ -288,68 +293,121 @@ export default function App() {
     setCommentarySubMsg('Powerplay active! Overs 1 & 2 double all run outcomes!');
   };
 
-  // Main Dice Roll Handler
-  const handleRoll = useCallback((forcedRoll?: number, forcedTactic?: TacticMode) => {
-    if (isRolling || phase === 'MATCH_OVER') return;
 
-    setIsRolling(true);
-    soundFx.playDiceRoll();
+  // Emoji clear timer
+  useEffect(() => {
+    if (emojiEvent) {
+      const timer = setTimeout(() => {
+        setEmojiEvent(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [emojiEvent]);
 
-    // Use forced tactic from opponent if provided, else use local selectedTactic
-    const activeTactic = forcedTactic || selectedTactic;
-
-    // Determine dice roll value based on shot tactic
+  
+  // Submit Action (Dual-Roll System)
+  const handleActionSubmit = useCallback((tactic?: TacticMode) => {
+    if (isRolling || phase === 'MATCH_OVER' || myTurnAction) return;
+    
+    soundFx.playClick();
+    const activeTactic = tactic || selectedTactic;
+    
     let roll = 1;
-    if (forcedRoll !== undefined) {
-      roll = forcedRoll;
-    } else {
-      if (activeTactic === 'DEFEND') {
-        const defendOpts = [1, 1, 2, 2, 3];
-        roll = defendOpts[Math.floor(Math.random() * defendOpts.length)];
-      } else if (activeTactic === 'ROTATE') {
-        const rotateOpts = [1, 2, 3, 4];
-        roll = rotateOpts[Math.floor(Math.random() * rotateOpts.length)];
-      } else { // ATTACK
-        const attackOpts = [2, 3, 4, 5, 6];
-        roll = attackOpts[Math.floor(Math.random() * attackOpts.length)];
-      }
+    if (activeTactic === 'DEFEND') roll = [1, 1, 2, 2, 3][Math.floor(Math.random() * 5)];
+    else if (activeTactic === 'ROTATE') roll = [1, 2, 3, 4][Math.floor(Math.random() * 4)];
+    else if (activeTactic === 'ATTACK') roll = [2, 3, 4, 5, 6][Math.floor(Math.random() * 5)];
+    else roll = Math.floor(Math.random() * 6) + 1;
+    
+    const action = { tactic: activeTactic, roll };
+    setMyTurnAction(action);
+    
+    if (settings.mode === 'MULTIPLAYER' && multiplayerRoomId) {
+      socketService.emit('player_action', {
+        roomId: multiplayerRoomId,
+        action: 'SUBMIT_TURN',
+        payload: action
+      });
     }
+  }, [isRolling, phase, myTurnAction, selectedTactic, settings.mode, multiplayerRoomId]);
 
-    // In multiplayer, if it's our strike and we didn't receive a forced roll, emit our action
-    if (settings.mode === 'MULTIPLAYER' && currentStrike === 'YOU' && forcedRoll === undefined) {
-      if (multiplayerRoomId) {
-        socketService.emit('player_action', {
-          roomId: multiplayerRoomId,
-          action: 'ROLL',
-          payload: {
-            roll,
-            tactic: activeTactic
-          }
-        });
-      }
+  // Handle AI turn action
+  useEffect(() => {
+    if (activeScreen === 'GAME' && phase !== 'MATCH_OVER' && settings.mode === 'VS_AI' && !opponentTurnAction) {
+      const timer = setTimeout(() => {
+        let aiTactic: TacticMode = 'ROTATE';
+        if (currentStrike === 'AI') {
+          aiTactic = 'ROTATE'; 
+        } else {
+          const bowOpts: TacticMode[] = ['FAST', 'SPIN', 'YORKER'];
+          aiTactic = bowOpts[Math.floor(Math.random() * bowOpts.length)];
+        }
+        
+        let roll = 1;
+        if (aiTactic === 'DEFEND') roll = [1, 1, 2, 2, 3][Math.floor(Math.random() * 5)];
+        else if (aiTactic === 'ROTATE') roll = [1, 2, 3, 4][Math.floor(Math.random() * 4)];
+        else if (aiTactic === 'ATTACK') roll = [2, 3, 4, 5, 6][Math.floor(Math.random() * 5)];
+        else roll = Math.floor(Math.random() * 6) + 1;
+
+        setOpponentTurnAction({ tactic: aiTactic, roll });
+      }, 1500);
+      return () => clearTimeout(timer);
     }
+  }, [activeScreen, phase, settings.mode, currentStrike, opponentTurnAction]);
 
-    setDiceVal(roll);
+  // Turn timer countdown and auto-roll
+  useEffect(() => {
+    if (activeScreen !== 'GAME' || phase === 'MATCH_OVER' || isRolling) return;
+    
+    if (myTurnAction && opponentTurnAction) return;
 
-    // Calculate new position on circular track
-    const nextIndex = (currentTileIndex + roll) % BOARD_TILES.length;
-    const landedTile = BOARD_TILES[nextIndex];
-    setLandedTileInfo(landedTile);
+    const timer = setInterval(() => {
+      setTurnTimer(prev => {
+        if (prev <= 1) {
+           clearInterval(timer);
+           // Auto-submit if haven't
+           if (!myTurnAction) {
+               const defaultTactic = currentStrike === 'YOU' ? 'ROTATE' : 'FAST';
+               handleActionSubmit(defaultTactic);
+           }
+           return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [activeScreen, phase, isRolling, myTurnAction, opponentTurnAction, currentStrike, handleActionSubmit]);
 
-    // Show dice animation modal briefly
-    setShowDiceModal(true);
+  // Resolve both actions when ready
+  useEffect(() => {
+    if (myTurnAction && opponentTurnAction && !isRolling && activeScreen === 'GAME' && phase !== 'MATCH_OVER') {
+      setIsRolling(true);
+      soundFx.playDiceRoll();
+      
+      const batterAction = currentStrike === 'YOU' ? myTurnAction : opponentTurnAction;
+      const bowlerAction = currentStrike === 'YOU' ? opponentTurnAction : myTurnAction;
+      
+      const combinedRoll = ((batterAction.roll + bowlerAction.roll) % 6) || 6;
+      setDiceVal(combinedRoll);
+      
+      let newIndex = currentTileIndex + combinedRoll;
+      if (newIndex > 36) newIndex -= 36;
+      
+      const landedTile = BOARD_TILES.find(t => t.id === newIndex) || BOARD_TILES[0];
+      setLandedTileInfo(landedTile);
+      setShowDiceModal(true);
+      
+      setTimeout(() => {
+        setShowDiceModal(false);
+        setCurrentTileIndex(newIndex);
+        resolveOutcome(landedTile, combinedRoll, batterAction.tactic);
+        setMyTurnAction(null);
+        setOpponentTurnAction(null);
+        setTurnTimer(10);
+      }, 2000); // Extended a bit to see both actions resolved
+    }
+  }, [myTurnAction, opponentTurnAction, isRolling, activeScreen, phase, currentTileIndex, currentStrike]);
 
-    setTimeout(() => {
-      setCurrentTileIndex(nextIndex);
-      setShowDiceModal(false);
-      setIsRolling(false);
-
-      // Process Tile Outcome
-      resolveOutcome(landedTile, roll, activeTactic);
-    }, 700);
-  }, [currentTileIndex, isRolling, phase, selectedTactic, settings.mode, currentStrike, multiplayerRoomId]);
-
-  // Resolve outcome of the landed tile
+// Resolve outcome of the landed tile
   const resolveOutcome = (tile: BoardTile, rollVal: number, activeTactic: TacticMode) => {
     let runsEarned = 0;
     let isWicketOut = false;
@@ -642,10 +700,8 @@ export default function App() {
         } else if (data.action === 'EMOJI') {
           // Handle emoji here
           setEmojiEvent({ player: 'AI', emoji: data.payload.emoji, id: Date.now() });
-        } else if (data.action === 'ROLL') {
-          const { roll, tactic } = data.payload;
-          setSelectedTactic(tactic);
-          handleRoll(roll, tactic);
+        } else if (data.action === 'SUBMIT_TURN') {
+          setOpponentTurnAction(data.payload);
         }
       };
       
@@ -661,54 +717,7 @@ export default function App() {
         socketService.off('opponent_disconnected', handleOpponentDisconnected);
       };
     }
-  }, [settings.mode, handleRoll]);
-
-  // AI Turn Auto-play Trigger
-  useEffect(() => {
-    if (activeScreen === 'GAME' && phase !== 'MATCH_OVER' && currentStrike === 'AI' && settings.mode === 'VS_AI' && !isRolling) {
-      const timer = setTimeout(() => {
-        let aiTactic: TacticMode = 'ROTATE';
-        
-        if (targetRuns) {
-          // Chasing logic
-          const runsNeeded = targetRuns - aiState.runs;
-          const ballsLeft = (settings.maxOvers * 6) - aiState.ballsBowled;
-          const reqRunRate = (runsNeeded / Math.max(1, ballsLeft)) * 6;
-
-          if (ballsLeft <= 6 || reqRunRate > 10) {
-            aiTactic = 'ATTACK';
-          } else if (aiState.wickets >= 8 && reqRunRate < 6) {
-            aiTactic = 'DEFEND';
-          } else if (reqRunRate > 6) {
-            aiTactic = Math.random() > 0.3 ? 'ATTACK' : 'ROTATE';
-          } else {
-            aiTactic = Math.random() > 0.6 ? 'ROTATE' : 'DEFEND';
-          }
-        } else {
-          // Batting first logic
-          const ballsLeft = (settings.maxOvers * 6) - aiState.ballsBowled;
-          
-          if (aiState.wickets >= 7) {
-            aiTactic = 'DEFEND';
-          } else if (isCurrentPowerplay) {
-            aiTactic = 'ATTACK';
-          } else if (ballsLeft <= 12) {
-            aiTactic = Math.random() > 0.2 ? 'ATTACK' : 'ROTATE';
-          } else {
-            const rand = Math.random();
-            if (rand < 0.2) aiTactic = 'DEFEND';
-            else if (rand < 0.7) aiTactic = 'ROTATE';
-            else aiTactic = 'ATTACK';
-          }
-        }
-
-        setSelectedTactic(aiTactic);
-        handleRoll();
-      }, 1200 + Math.random() * 800); // Random delay to feel more human
-
-      return () => clearTimeout(timer);
-    }
-  }, [activeScreen, currentStrike, isRolling, phase, settings.mode, handleRoll, targetRuns, aiState.runs, aiState.ballsBowled, aiState.wickets, settings.maxOvers, isCurrentPowerplay]);
+  }, [settings.mode]);
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 font-sans flex flex-col justify-between selection:bg-amber-500 selection:text-stone-950 relative overflow-x-hidden">
@@ -854,24 +863,42 @@ export default function App() {
           <OversHistory history={activePlayer.history} />
 
           {/* Action Controls (Defend, Rotate, Attack, ROLL) */}
-          <ActionControls
-            selectedTactic={selectedTactic}
-            onSelectTactic={setSelectedTactic}
-            onRoll={() => handleRoll()}
-            isRolling={isRolling}
-                        disabled={phase === 'MATCH_OVER' || (currentStrike === 'AI' && (settings.mode === 'VS_AI' || settings.mode === 'MULTIPLAYER'))}
-            showEmoji={settings.mode === 'MULTIPLAYER'}
-            onSendEmoji={(emoji) => {
-              if (settings.mode === 'MULTIPLAYER' && multiplayerRoomId) {
-                socketService.emit('player_action', {
-                  roomId: multiplayerRoomId,
-                  action: 'EMOJI',
-                  payload: { emoji }
-                });
-                setEmojiEvent({ player: 'YOU', emoji, id: Date.now() });
-              }
-            }}
-          />
+          
+          <div className="flex flex-col items-center">
+            {/* Timer visualizer */}
+            {activeScreen === 'GAME' && phase !== 'MATCH_OVER' && !isRolling && (
+              <div className="w-full max-w-xl mx-auto px-4 mb-2 flex items-center justify-between">
+                <span className="text-xs font-bold text-stone-400">TURN TIMER</span>
+                <div className="flex-1 mx-3 h-2 bg-stone-800 rounded-full overflow-hidden border border-stone-700">
+                  <div 
+                    className={`h-full transition-all duration-1000 ${turnTimer <= 3 ? 'bg-rose-500' : 'bg-amber-500'}`} 
+                    style={{ width: `${(turnTimer / 10) * 100}%` }}
+                  />
+                </div>
+                <span className={`text-sm font-black ${turnTimer <= 3 ? 'text-rose-500' : 'text-amber-500'}`}>{turnTimer}s</span>
+              </div>
+            )}
+            <ActionControls
+              selectedTactic={selectedTactic}
+              onSelectTactic={setSelectedTactic}
+              onRoll={() => handleActionSubmit()}
+              isRolling={isRolling || myTurnAction !== null}
+              disabled={phase === 'MATCH_OVER'}
+              showEmoji={!!multiplayerRoomId}
+              isBatting={currentStrike === 'YOU'}
+              onSendEmoji={(emoji) => {
+                if (multiplayerRoomId) {
+                  socketService.emit('player_action', {
+                    roomId: multiplayerRoomId,
+                    action: 'EMOJI',
+                    payload: { emoji }
+                  });
+                  setEmojiEvent({ player: 'YOU', emoji, id: Date.now() });
+                }
+              }}
+            />
+          </div>
+
         </div>
       )}
 
@@ -900,6 +927,7 @@ export default function App() {
         onUpdateSettings={(newSet) => setSettings((prev) => ({ ...prev, ...newSet }))}
         onRestartMatch={handleRestartMatch}
         onExitToLobby={handleExitToLobby}
+        isMultiplayer={!!multiplayerRoomId}
       />
 
       {/* Match End Summary Modal */}
@@ -908,7 +936,7 @@ export default function App() {
         youState={youState}
         aiState={aiState}
         targetRuns={targetRuns}
-        onPlayAgain={settings.mode === 'MULTIPLAYER' ? undefined : handleRestartMatch}
+        onPlayAgain={multiplayerRoomId ? undefined : handleRestartMatch}
         onExitToLobby={handleExitToLobby}
       />
     </div>

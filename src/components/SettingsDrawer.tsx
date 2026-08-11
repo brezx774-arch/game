@@ -10,6 +10,7 @@ interface SettingsDrawerProps {
   onUpdateSettings: (newSettings: Partial<GameSettings>) => void;
   onRestartMatch: () => void;
   onExitToLobby?: () => void;
+  isMultiplayer?: boolean;
 }
 
 export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
@@ -19,6 +20,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   onUpdateSettings,
   onRestartMatch,
   onExitToLobby,
+  isMultiplayer,
 }) => {
   if (!isOpen) return null;
 
@@ -46,7 +48,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
           </div>
 
           <div className="space-y-6 mt-5 text-xs">
-            {settings.mode !== 'MULTIPLAYER' && (<>
+            {!isMultiplayer && (<>
             {/* Game Mode */}
             <div>
               <label className="block text-stone-400 font-bold uppercase tracking-wider mb-2">
@@ -175,7 +177,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               <span>Exit to Lobby</span>
             </button>
           )}
-          {settings.mode !== 'MULTIPLAYER' && (
+          {!isMultiplayer && (
           <button
             onClick={() => {
               soundFx.playClick();
