@@ -280,7 +280,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
             >
               <div className="relative z-10 text-center">
                 <h1 className="text-6xl sm:text-7xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-600 drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] font-sans uppercase leading-none">
-                  SIX<br />APPEAL
+                  CRICKET<br />ROYALE
                 </h1>
                 <motion.div 
                   initial={{ y: 20, opacity: 0 }}

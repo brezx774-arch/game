@@ -28,6 +28,7 @@ import { RulesModal } from './components/RulesModal';
 import { SettingsDrawer } from './components/SettingsDrawer';
 import { MatchEndModal } from './components/MatchEndModal';
 import { LobbyScreen } from './components/LobbyScreen';
+import { TossScreen } from './components/TossScreen';
 
 export const STADIUMS: Ground[] = [
   { 
@@ -132,13 +133,17 @@ export default function App() {
   });
 
   // Game Engine State
-  const [activeScreen, setActiveScreen] = useState<'LOBBY' | 'GAME'>('LOBBY');
+  const [activeScreen, setActiveScreen] = useState<'LOBBY' | 'TOSS' | 'GAME'>('LOBBY');
+  const [tossCallerId, setTossCallerId] = useState<string>('');
+  const [multiplayerOpponentName, setMultiplayerOpponentName] = useState<string>('');
+  const [isBotToss, setIsBotToss] = useState<boolean>(false);
   const [selectedGround, setSelectedGround] = useState<Ground>(STADIUMS[0]);
   const [currentStrike, setCurrentStrike] = useState<'YOU' | 'AI'>('YOU');
   const [phase, setPhase] = useState<GamePhase>('INNINGS_1');
   const [targetRuns, setTargetRuns] = useState<number | undefined>(undefined);
   const [currentTileIndex, setCurrentTileIndex] = useState<number>(1);
   const [selectedTactic, setSelectedTactic] = useState<TacticMode>('ROTATE');
+  const [emojiEvent, setEmojiEvent] = useState<{player: 'YOU'|'AI', emoji: string, id: number} | null>(null);
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [isFreeHit, setIsFreeHit] = useState<boolean>(false);
 
@@ -232,6 +237,22 @@ export default function App() {
   const isCurrentPowerplay = isPowerplayActive(activePlayer.ballsBowled);
 
   // Restart Fresh Match
+  
+  const handleExitToLobby = () => {
+    setActiveScreen('LOBBY');
+    setPhase('MATCH_OVER');
+    setIsRolling(false);
+    
+    if (settings.mode === 'MULTIPLAYER' && multiplayerRoomId) {
+      socketService.emit('player_action', {
+        roomId: multiplayerRoomId,
+        action: 'LEAVE',
+        payload: {}
+      });
+      socketService.emit('cancel_matchmaking');
+    }
+  };
+
   const handleRestartMatch = () => {
     setYouState({
       name: 'YOU',
@@ -613,7 +634,14 @@ export default function App() {
   useEffect(() => {
     if (settings.mode === 'MULTIPLAYER') {
       const handleOpponentAction = (data: { action: string, payload: any }) => {
-        if (data.action === 'ROLL') {
+        if (data.action === 'LEAVE') {
+          setSettings(prev => ({ ...prev, mode: 'VS_AI' }));
+          setCommentaryMsg('Opponent left.');
+          setCommentarySubMsg('AI took over!');
+        } else if (data.action === 'EMOJI') {
+          // Handle emoji here
+          setEmojiEvent({ player: 'AI', emoji: data.payload.emoji, id: Date.now() });
+        } else if (data.action === 'ROLL') {
           const { roll, tactic } = data.payload;
           setSelectedTactic(tactic);
           handleRoll(roll, tactic);
@@ -686,7 +714,25 @@ export default function App() {
       {/* Background Stadium Glow & Vignette */}
       <div className={`fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] ${activeScreen === 'GAME' ? selectedGround.gradientClass : 'from-amber-950/20 via-stone-950 to-black'} pointer-events-none transition-colors duration-1000`} />
 
-      {activeScreen === 'LOBBY' ? (
+      {activeScreen === 'TOSS' ? (
+        <TossScreen
+          mode={settings.mode === 'MULTIPLAYER' ? 'MULTIPLAYER' : 'VS_AI'}
+          roomId={multiplayerRoomId || undefined}
+          myId={myPlayerId}
+          opponentId={opponentPlayerId}
+          opponentName={multiplayerOpponentName}
+          callerId={tossCallerId}
+          isBotMatch={isBotToss}
+          onTossComplete={(firstStrikerId) => {
+            setCurrentStrike(firstStrikerId === myPlayerId ? 'YOU' : 'AI');
+            setPhase('INNINGS_1');
+            setTargetRuns(undefined);
+            setCommentaryMsg('Match started!');
+            setCommentarySubMsg('First to bat is selected.');
+            setActiveScreen('GAME');
+          }}
+        />
+      ) : activeScreen === 'LOBBY' ? (
         <LobbyScreen 
           onStart={(ground, mode) => {
             setSelectedGround(ground);
@@ -696,7 +742,12 @@ export default function App() {
               setSettings(prev => ({ ...prev, mode: 'VS_AI' }));
             }
             handleRestartMatch();
-            setActiveScreen('GAME');
+            setMyPlayerId('YOU');
+            setOpponentPlayerId('AI');
+            setMultiplayerOpponentName('AI');
+            setTossCallerId(Math.random() > 0.5 ? 'YOU' : 'AI');
+            setIsBotToss(true);
+            setActiveScreen('TOSS');
           }}
           onStartMultiplayer={(roomId, firstStrikerId, opponentId, opponentName, isBot) => {
             setMultiplayerRoomId(roomId);
@@ -734,12 +785,10 @@ export default function App() {
               dotsCount: 0,
             });
 
-            setPhase('INNINGS_1');
-            setCurrentStrike(socketService.socket?.id === firstStrikerId ? 'YOU' : 'AI');
-            setTargetRuns(undefined);
-            setCommentaryMsg('Match started!');
-            setCommentarySubMsg('First to bat is selected.');
-            setActiveScreen('GAME');
+            setMultiplayerOpponentName(opponentName || 'OPPONENT');
+            setTossCallerId(firstStrikerId);
+            setIsBotToss(isBot || false);
+            setActiveScreen('TOSS');
           }}
           onOpenSettings={() => setIsSettingsOpen(true)}
           coins={coins}
@@ -788,6 +837,21 @@ export default function App() {
             ground={selectedGround}
           />
 
+          
+      {emojiEvent && (
+        <motion.div
+          key={emojiEvent.id}
+          initial={{ opacity: 0, scale: 0.5, y: 50 }}
+          animate={{ opacity: 1, scale: 1.5, y: -50 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 2 }}
+          className={`absolute top-1/3 z-[100] text-6xl ${emojiEvent.player === 'YOU' ? 'left-10' : 'right-10'}`}
+          onAnimationComplete={() => setEmojiEvent(null)}
+        >
+          {emojiEvent.emoji}
+        </motion.div>
+      )}
+
           {/* Commentary Event Banner */}
           <CommentaryBanner
             message={commentaryMsg}
@@ -805,7 +869,18 @@ export default function App() {
             onSelectTactic={setSelectedTactic}
             onRoll={() => handleRoll()}
             isRolling={isRolling}
-            disabled={phase === 'MATCH_OVER' || (currentStrike === 'AI' && (settings.mode === 'VS_AI' || settings.mode === 'MULTIPLAYER'))}
+                        disabled={phase === 'MATCH_OVER' || (currentStrike === 'AI' && (settings.mode === 'VS_AI' || settings.mode === 'MULTIPLAYER'))}
+            showEmoji={settings.mode === 'MULTIPLAYER'}
+            onSendEmoji={(emoji) => {
+              if (settings.mode === 'MULTIPLAYER' && multiplayerRoomId) {
+                socketService.emit('player_action', {
+                  roomId: multiplayerRoomId,
+                  action: 'EMOJI',
+                  payload: { emoji }
+                });
+                setEmojiEvent({ player: 'YOU', emoji, id: Date.now() });
+              }
+            }}
           />
         </div>
       )}
@@ -834,7 +909,7 @@ export default function App() {
         settings={settings}
         onUpdateSettings={(newSet) => setSettings((prev) => ({ ...prev, ...newSet }))}
         onRestartMatch={handleRestartMatch}
-        onExitToLobby={() => setActiveScreen('LOBBY')}
+        onExitToLobby={handleExitToLobby}
       />
 
       {/* Match End Summary Modal */}
@@ -844,7 +919,7 @@ export default function App() {
         aiState={aiState}
         targetRuns={targetRuns}
         onPlayAgain={handleRestartMatch}
-        onExitToLobby={() => setActiveScreen('LOBBY')}
+        onExitToLobby={handleExitToLobby}
       />
     </div>
   );

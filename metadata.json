@@ -1,6 +1,8 @@
 {
-  "name": "Six Appeal - Cricket Board Game",
-  "description": "An immersive circular cricket board game featuring dice rolling, tactical shots (Defend, Rotate, Attack), Powerplays, commentary, AI & Pass-n-Play modes, and full stadium visuals.",
+  "name": "Cricket Royale",
+  "description": "Cricket Royale is an immersive circular cricket board game featuring dice rolling, tactical shots (Defend, Rotate, Attack), multiplayer, AI & Pass-n-Play modes, and full stadium visuals.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

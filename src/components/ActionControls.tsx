@@ -10,6 +10,8 @@ interface ActionControlsProps {
   onRoll: () => void;
   isRolling: boolean;
   disabled?: boolean;
+  onSendEmoji?: (emoji: string) => void;
+  showEmoji?: boolean;
 }
 
 export const ActionControls: React.FC<ActionControlsProps> = ({
@@ -18,13 +20,49 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
   onRoll,
   isRolling,
   disabled,
+  onSendEmoji,
+  showEmoji,
 }) => {
+  const [isEmojiMenuOpen, setIsEmojiMenuOpen] = React.useState(false);
+  const EMOJIS = ['😂', '😎', '😡', '😭', '🔥', '👎'];
+
   return (
     <div
       id="controls-play-bar"
       className="w-full max-w-xl mx-auto px-2 my-2 relative z-20 pb-4"
     >
       <div className="flex gap-2 items-end justify-center">
+        
+        {/* Emoji Button (only if showEmoji true) */}
+        {showEmoji && onSendEmoji && (
+          <div className="relative flex flex-col justify-end pb-1">
+             <motion.button 
+               whileTap={{ scale: 0.9 }}
+               onClick={() => setIsEmojiMenuOpen(!isEmojiMenuOpen)}
+               className="w-12 h-12 bg-stone-800 rounded-full border-2 border-stone-600 flex items-center justify-center text-xl shadow-lg"
+             >
+               😎
+             </motion.button>
+             
+             {isEmojiMenuOpen && (
+               <div className="absolute bottom-[60px] left-[-20px] bg-stone-900 border-2 border-stone-700 p-2 rounded-2xl flex flex-col gap-2 shadow-2xl z-[100]">
+                 {EMOJIS.map(e => (
+                   <button 
+                     key={e} 
+                     onClick={() => {
+                        onSendEmoji(e);
+                        setIsEmojiMenuOpen(false);
+                     }}
+                     className="text-2xl hover:scale-125 transition-transform"
+                   >
+                     {e}
+                   </button>
+                 ))}
+               </div>
+             )}
+          </div>
+        )}
+
         {/* Tactics Column */}
         <div className="flex-1 flex flex-col gap-2 max-w-[200px]">
           <div className="flex justify-between items-center px-1 mb-1">
