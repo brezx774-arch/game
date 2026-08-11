@@ -29,6 +29,7 @@ import { SettingsDrawer } from './components/SettingsDrawer';
 import { MatchEndModal } from './components/MatchEndModal';
 import { LobbyScreen } from './components/LobbyScreen';
 import { TossScreen } from './components/TossScreen';
+import { MatchPlayersBanner } from './components/MatchPlayersBanner';
 
 export const STADIUMS: Ground[] = [
   { 
@@ -664,7 +665,7 @@ export default function App() {
 
   // AI Turn Auto-play Trigger
   useEffect(() => {
-    if (phase !== 'MATCH_OVER' && currentStrike === 'AI' && settings.mode === 'VS_AI' && !isRolling) {
+    if (activeScreen === 'GAME' && phase !== 'MATCH_OVER' && currentStrike === 'AI' && settings.mode === 'VS_AI' && !isRolling) {
       const timer = setTimeout(() => {
         let aiTactic: TacticMode = 'ROTATE';
         
@@ -707,7 +708,7 @@ export default function App() {
 
       return () => clearTimeout(timer);
     }
-  }, [currentStrike, isRolling, phase, settings.mode, handleRoll, targetRuns, aiState.runs, aiState.ballsBowled, aiState.wickets, settings.maxOvers, isCurrentPowerplay]);
+  }, [activeScreen, currentStrike, isRolling, phase, settings.mode, handleRoll, targetRuns, aiState.runs, aiState.ballsBowled, aiState.wickets, settings.maxOvers, isCurrentPowerplay]);
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 font-sans flex flex-col justify-between selection:bg-amber-500 selection:text-stone-950 relative overflow-x-hidden">
@@ -820,6 +821,7 @@ export default function App() {
           />
 
           {/* Scoreboard */}
+          <MatchPlayersBanner youState={youState} aiState={aiState} emojiEvent={emojiEvent} playerLevel={playerLevel} opponentLevel={settings.mode === 'MULTIPLAYER' ? 5 : 10} />
           <Scoreboard
             youState={youState}
             aiState={aiState}
@@ -838,19 +840,7 @@ export default function App() {
           />
 
           
-      {emojiEvent && (
-        <motion.div
-          key={emojiEvent.id}
-          initial={{ opacity: 0, scale: 0.5, y: 50 }}
-          animate={{ opacity: 1, scale: 1.5, y: -50 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 2 }}
-          className={`absolute top-1/3 z-[100] text-6xl ${emojiEvent.player === 'YOU' ? 'left-10' : 'right-10'}`}
-          onAnimationComplete={() => setEmojiEvent(null)}
-        >
-          {emojiEvent.emoji}
-        </motion.div>
-      )}
+
 
           {/* Commentary Event Banner */}
           <CommentaryBanner
@@ -918,7 +908,7 @@ export default function App() {
         youState={youState}
         aiState={aiState}
         targetRuns={targetRuns}
-        onPlayAgain={handleRestartMatch}
+        onPlayAgain={settings.mode === 'MULTIPLAYER' ? undefined : handleRestartMatch}
         onExitToLobby={handleExitToLobby}
       />
     </div>

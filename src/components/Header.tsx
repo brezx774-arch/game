@@ -81,7 +81,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Stylized Logo Text */}
             <div className="text-center relative z-10">
               <h1 className="text-xl sm:text-2xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-sans uppercase">
-                SIX APPEAL
+                CRICKET ROYALE
               </h1>
               {selectedGround ? (
                 <div className="flex items-center gap-1 justify-center bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-sm shadow-md mt-[-4px] border border-white/10">

@@ -9,7 +9,7 @@ interface MatchEndModalProps {
   youState: PlayerState;
   aiState: PlayerState;
   targetRuns?: number;
-  onPlayAgain: () => void;
+  onPlayAgain?: () => void;
   onExitToLobby?: () => void;
 }
 
@@ -150,7 +150,7 @@ export const MatchEndModal: React.FC<MatchEndModalProps> = ({
 
         {/* Play Again Button */}
         <div className="flex flex-col gap-2">
-          <button
+          {onPlayAgain && (<button
             onClick={() => {
               soundFx.playClick();
               onPlayAgain();
@@ -159,7 +159,7 @@ export const MatchEndModal: React.FC<MatchEndModalProps> = ({
           >
             <RotateCcw className="w-5 h-5" />
             <span>PLAY AGAIN</span>
-          </button>
+          </button>)}
 
           {onExitToLobby && (
             <button

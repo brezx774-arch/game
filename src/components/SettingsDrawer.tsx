@@ -46,6 +46,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
           </div>
 
           <div className="space-y-6 mt-5 text-xs">
+            {settings.mode !== 'MULTIPLAYER' && (<>
             {/* Game Mode */}
             <div>
               <label className="block text-stone-400 font-bold uppercase tracking-wider mb-2">
@@ -136,6 +137,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               </div>
             )}
 
+            </>)}
             {/* Audio Toggle */}
             <div>
               <label className="block text-stone-400 font-bold uppercase tracking-wider mb-2">
@@ -173,6 +175,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               <span>Exit to Lobby</span>
             </button>
           )}
+          {settings.mode !== 'MULTIPLAYER' && (
           <button
             onClick={() => {
               soundFx.playClick();
@@ -184,6 +187,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             <RotateCcw className="w-4 h-4" />
             <span>New Match</span>
           </button>
+          )}
         </div>
       </div>
     </div>
