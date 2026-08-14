@@ -109,6 +109,7 @@ export default function App() {
           });
           localStorage.setItem('app_version', data.version);
           await CapacitorUpdater.set(version);
+          await CapacitorUpdater.reload();
         }
       } catch (err) {
         console.error('Update check failed:', err);
