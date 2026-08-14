@@ -3,6 +3,7 @@ import { Play, Settings, Trophy, User, Coins, Star, Store, Home, Medal, Activity
 import { motion, AnimatePresence } from 'motion/react';
 import { soundFx } from '../utils/audio';
 import { socketService } from '../utils/socket';
+import { LeaderboardScreen } from './LeaderboardScreen';
 
 import { Ground, GameMode } from '../types';
 
@@ -182,6 +183,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     
     spin();
   };
+
+  if (showLeaderboard) return <LeaderboardScreen onBack={() => setShowLeaderboard(false)} />;
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 z-10 w-full max-w-md mx-auto relative pb-24 pt-8">
@@ -537,7 +540,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     <div className="grid grid-cols-2 gap-4 mt-2">
                       <motion.button
                         whileTap={{ scale: 0.95 }}
-                        className="h-16 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-black text-stone-200 flex flex-col items-center justify-center gap-1 shadow-xl relative overflow-hidden opacity-50 cursor-not-allowed"
+                        onClick={() => setShowLeaderboard(true)}
+                        className="h-16 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-stone-950 hover:border-b-[4px] hover:translate-y-[2px] active:border-b-[0px] active:translate-y-[6px] text-stone-200 flex flex-col items-center justify-center gap-1 shadow-xl relative overflow-hidden transition-all"
                       >
                          <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/5 rounded-t-2xl" />
                          <Trophy className="w-5 h-5 text-[#facc15] drop-shadow-sm" />
