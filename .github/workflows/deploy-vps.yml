@@ -17,7 +17,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             # Navigate to your project folder (update this path to match your VPS)
-            cd /path/to/your/project
+            cd /var/www/game
             
             # Pull latest changes from GitHub
             git pull origin main
@@ -27,4 +27,4 @@ jobs:
             npm run build
             
             # Restart the PM2 process (update 'cricket' to your actual PM2 process name)
-            pm2 restart cricket
+            pm2 restart cricket-server
