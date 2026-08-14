@@ -1,19 +1,21 @@
 const fs = require('fs');
-let code = fs.readFileSync('server.ts', 'utf8');
+let c = fs.readFileSync('server.ts', 'utf-8');
 
-code = code.replace(
-  "const firstStriker = Math.random() > 0.5 ? socket.id : opponent.id;\n          io.to(roomId).emit('match_start', {\n            firstStriker\n          });",
-  "const firstStriker = Math.random() > 0.5 ? socket.id : opponent.id;\n          const groundIndex = Math.floor(Math.random() * 5);\n          io.to(roomId).emit('match_start', {\n            firstStriker,\n            groundIndex\n          });"
-);
+const target = "app.use(express.json());";
+const replace = `app.use(express.json());
 
-code = code.replace(
-  "const firstStriker = Math.random() > 0.5 ? socket.id : fakeOpponentId;\n            socket.emit('match_start', {\n              firstStriker\n            });",
-  "const firstStriker = Math.random() > 0.5 ? socket.id : fakeOpponentId;\n            const groundIndex = Math.floor(Math.random() * 5);\n            socket.emit('match_start', {\n              firstStriker,\n              groundIndex\n            });"
-);
+  // Self-Hosted OTA Update Endpoint
+  app.get('/api/check-update', (req, res) => {
+    // Read the version from env or fallback
+    // The zip file should be hosted at this URL on your VPS
+    res.json({
+      version: process.env.APP_VERSION || '1.0.0',
+      url: process.env.APP_UPDATE_URL || ''
+    });
+  });
+`;
 
-code = code.replace(
-  "const firstStriker = Math.random() > 0.5 ? opponent.id : socket.id;\n        io.to(roomCode).emit('match_start', {\n          firstStriker\n        });",
-  "const firstStriker = Math.random() > 0.5 ? opponent.id : socket.id;\n        const groundIndex = Math.floor(Math.random() * 5);\n        io.to(roomCode).emit('match_start', {\n          firstStriker,\n          groundIndex\n        });"
-);
-
-fs.writeFileSync('server.ts', code);
+if (c.includes(target) && !c.includes('/api/check-update')) {
+    c = c.replace(target, replace);
+    fs.writeFileSync('server.ts', c);
+}
