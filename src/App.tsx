@@ -790,7 +790,7 @@ export default function App() {
     );
   }
 
-  if (!user) {
+  if (false && !user) {
     return <LoginScreen />;
   }
 
@@ -886,8 +886,8 @@ export default function App() {
           dailyRewardAmount={dailyRewardAmount}
           onClaimDailyReward={claimDailyReward}
           onSpendCoins={(amount) => updateProfile({ coins: coins - amount })}
-          playerName={profile?.displayName || user.displayName || 'Player'}
-          playerAvatar={profile?.photoURL || user.photoURL || ''}
+          playerName={profile?.displayName || user?.displayName || 'Player'}
+          playerAvatar={profile?.photoURL || user?.photoURL || ''}
         />
       ) : (
         <div className="relative z-10 flex-1 flex flex-col justify-between w-full max-w-2xl mx-auto pb-4">
