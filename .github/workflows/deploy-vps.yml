@@ -62,4 +62,4 @@ jobs:
             echo "APP_UPDATE_URL=https://amongush.duckdns.org/updates/${ZIP_NAME}" >> .env
             
             # Restart the PM2 process
-            pm2 restart cricket-server
+            /root/.nvm/versions/node/v24.18.1/bin/pm2 restart cricket-server
