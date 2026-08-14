@@ -9,15 +9,29 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
       - name: Execute deployment on VPS via SSH
         uses: appleboy/ssh-action@master
+        env:
+          SHA: ${{ github.sha }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          envs: SHA
           script: |
-            # Navigate to your project folder (update this path to match your VPS)
-            cd /path/to/your/project
+            SHORT_SHA=${SHA:0:7}
+            
+            # --- IMPORTANT: UPDATE THIS PATH TO WHERE YOUR PROJECT IS ON THE VPS ---
+            PROJECT_DIR="~/sixappeal" # Replace with your actual path (e.g., /var/www/cricket)
+            
+            cd $PROJECT_DIR
+            
+            # Load NVM so npm and pm2 are in the PATH during this non-interactive SSH session
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
             # Pull latest changes from GitHub
             git pull origin main
@@ -26,5 +40,26 @@ jobs:
             npm install
             npm run build
             
-            # Restart the PM2 process (update 'cricket' to your actual PM2 process name)
-            pm2 restart cricket
+            # Zip the dist/ output
+            cd dist
+            ZIP_NAME="update_${SHORT_SHA}.zip"
+            zip -r $ZIP_NAME *
+            
+            # Copy to Nginx updates directory (added sudo in case of permissions, but usually works without if you own the folder)
+            mkdir -p /var/www/html/updates/
+            cp $ZIP_NAME /var/www/html/updates/
+            
+            # Go back to project root
+            cd ..
+            
+            # Update .env file
+            # Remove existing APP_VERSION and APP_UPDATE_URL lines if they exist
+            sed -i '/^APP_VERSION=/d' .env
+            sed -i '/^APP_UPDATE_URL=/d' .env
+            
+            # Append new variables
+            echo "APP_VERSION=${SHORT_SHA}" >> .env
+            echo "APP_UPDATE_URL=https://amongush.duckdns.org/updates/${ZIP_NAME}" >> .env
+            
+            # Restart the PM2 process
+            pm2 restart cricket-server
