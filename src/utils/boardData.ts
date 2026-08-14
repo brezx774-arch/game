@@ -4,14 +4,14 @@ import { BoardTile } from '../types';
 export const BOARD_TILES: BoardTile[] = [
   {
     id: 0,
-    type: 'FREE_HIT',
-    label: 'FH',
-    sublabel: 'Free Hit',
+    type: 'START',
+    label: 'START',
+    sublabel: 'Start',
     colorClass: 'border-emerald-400 bg-emerald-950/80 text-emerald-300',
     bgHex: '#064e3b',
     borderHex: '#34d399',
     textHex: '#6ee7b7',
-    badge: 'FREE HIT'
+    badge: 'START'
   },
   {
     id: 1,

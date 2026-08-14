@@ -1,4 +1,6 @@
-import React from 'react';
+const fs = require('fs');
+
+const code = `import React from 'react';
 import { PlayerState, GamePhase } from '../types';
 import { Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -7,16 +9,12 @@ interface ScoreboardProps {
   youState: PlayerState;
   aiState: PlayerState;
   isPowerplay: boolean;
-  currentStrike: 'YOU' | 'AI' | 'PLAYER_2';
-  turnTimer?: number;
 }
 
 export const Scoreboard: React.FC<ScoreboardProps> = ({
   youState,
   aiState,
   isPowerplay,
-  currentStrike,
-  turnTimer,
 }) => {
   return (
     <div id="card-scoreboard" className="w-full max-w-2xl mx-auto px-1 mt-1 z-50 pointer-events-none">
@@ -43,23 +41,15 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
       <div className="flex bg-[#0f172a] rounded-sm shadow-2xl overflow-hidden border border-[#334155] relative z-10 pointer-events-auto">
         
         {/* Player 1 (YOU) */}
-        <div className={`relative flex-1 flex flex-col border-r-2 border-[#1e293b] overflow-hidden ${currentStrike === 'YOU' ? 'bg-gradient-to-br from-[#0ea5e9]/20 to-[#0f172a]' : 'opacity-70'}`}>
-          {currentStrike === 'YOU' && turnTimer !== undefined && (
-            <div className="absolute bottom-0 left-0 h-1.5 w-full bg-slate-900">
-              <div 
-                className={`h-full transition-all duration-1000 ${turnTimer <= 3 ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.8)]' : 'bg-amber-500'}`} 
-                style={{ width: `${(Math.max(0, turnTimer) / 20) * 100}%` }}
-              />
-            </div>
-          )}
+        <div className="flex-1 flex flex-col border-r-2 border-[#1e293b] bg-gradient-to-br from-[#0ea5e9]/20 to-[#0f172a]">
            <div className="bg-[#0ea5e9] px-2 py-0.5 text-[10px] font-black text-white tracking-widest uppercase flex justify-between items-center">
              <span>{youState.name}</span>
-             {currentStrike === 'YOU' && <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_5px_#34d399] animate-pulse" />}
+             <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_5px_#34d399] animate-pulse" />
            </div>
            <div className="p-2 flex justify-between items-center">
              <div className="flex items-baseline gap-1">
                <motion.span 
-                 key={`runs-${youState.runs}`}
+                 key={\`runs-\${youState.runs}\`}
                  initial={{ scale: 1.5, color: '#facc15' }}
                  animate={{ scale: 1, color: '#ffffff' }}
                  className="text-3xl font-black text-white tracking-tighter"
@@ -68,7 +58,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                </motion.span>
                <span className="text-lg font-bold text-[#94a3b8]">-</span>
                <motion.span 
-                 key={`w-${youState.wickets}`}
+                 key={\`w-\${youState.wickets}\`}
                  initial={{ scale: 1.5, color: '#ef4444' }}
                  animate={{ scale: 1, color: '#ffffff' }}
                  className="text-2xl font-black text-white tracking-tighter"
@@ -84,23 +74,15 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
         </div>
 
         {/* Player 2 (AI/Opponent) */}
-        <div className={`relative flex-1 flex flex-col overflow-hidden ${currentStrike !== 'YOU' ? 'bg-gradient-to-bl from-[#ef4444]/20 to-[#0f172a]' : 'opacity-70'}`}>
-          {currentStrike !== 'YOU' && turnTimer !== undefined && (
-            <div className="absolute bottom-0 left-0 h-1.5 w-full bg-slate-900">
-              <div 
-                className={`h-full transition-all duration-1000 ${turnTimer <= 3 ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.8)]' : 'bg-amber-500'}`} 
-                style={{ width: `${(Math.max(0, turnTimer) / 20) * 100}%` }}
-              />
-            </div>
-          )}
+        <div className="flex-1 flex flex-col bg-gradient-to-bl from-[#ef4444]/20 to-[#0f172a]">
            <div className="bg-[#ef4444] px-2 py-0.5 text-[10px] font-black text-white tracking-widest uppercase flex justify-between items-center flex-row-reverse">
              <span>{aiState.name}</span>
-             {currentStrike !== 'YOU' && <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_5px_#34d399] animate-pulse" />}
+             <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_5px_#34d399] animate-pulse" />
            </div>
            <div className="p-2 flex justify-between items-center flex-row-reverse">
              <div className="flex items-baseline gap-1 flex-row-reverse">
                <motion.span 
-                 key={`runs-${aiState.runs}`}
+                 key={\`runs-\${aiState.runs}\`}
                  initial={{ scale: 1.5, color: '#facc15' }}
                  animate={{ scale: 1, color: '#ffffff' }}
                  className="text-3xl font-black text-white tracking-tighter"
@@ -109,7 +91,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                </motion.span>
                <span className="text-lg font-bold text-[#94a3b8]">-</span>
                <motion.span 
-                 key={`w-${aiState.wickets}`}
+                 key={\`w-\${aiState.wickets}\`}
                  initial={{ scale: 1.5, color: '#ef4444' }}
                  animate={{ scale: 1, color: '#ffffff' }}
                  className="text-2xl font-black text-white tracking-tighter"
@@ -128,3 +110,6 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
     </div>
   );
 };
+`;
+
+fs.writeFileSync('src/components/Scoreboard.tsx', code);

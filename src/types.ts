@@ -12,7 +12,8 @@ export type TileType =
   | 'WIDE' 
   | 'FREE_HIT' 
   | 'POWER_ROLL' 
-  | 'POWER_SHOT';
+  | 'POWER_SHOT'
+  | 'START';
 
 export interface BoardTile {
   id: number;

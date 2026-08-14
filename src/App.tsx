@@ -142,15 +142,17 @@ export default function App() {
   const [currentStrike, setCurrentStrike] = useState<'YOU' | 'AI'>('YOU');
   const [phase, setPhase] = useState<GamePhase>('INNINGS_1');
   const [targetRuns, setTargetRuns] = useState<number | undefined>(undefined);
-  const [currentTileIndex, setCurrentTileIndex] = useState<number>(1);
+  const [youTileIndex, setYouTileIndex] = useState<number>(0);
+  const [aiTileIndex, setAiTileIndex] = useState<number>(0);
   const [selectedTactic, setSelectedTactic] = useState<TacticMode>('ROTATE');
   const [emojiEvent, setEmojiEvent] = useState<{player: 'YOU'|'AI', emoji: string, id: number} | null>(null);
-  const [isRolling, setIsRolling] = useState<boolean>(false);
+  
+      
   const [isFreeHit, setIsFreeHit] = useState<boolean>(false);
-
+  const [myTurnAction, setMyTurnAction] = useState<{tactic: TacticMode, roll: number, catchRand?: number} | null>(null);
+  const [opponentTurnAction, setOpponentTurnAction] = useState<{tactic: TacticMode, roll: number, catchRand?: number} | null>(null);
+  const [isRolling, setIsRolling] = useState<boolean>(false);
   const [turnTimer, setTurnTimer] = useState<number>(10);
-  const [myTurnAction, setMyTurnAction] = useState<{tactic: TacticMode, roll: number} | null>(null);
-  const [opponentTurnAction, setOpponentTurnAction] = useState<{tactic: TacticMode, roll: number} | null>(null);
 
 
   // Dice Modal state
@@ -247,8 +249,7 @@ export default function App() {
   const handleExitToLobby = () => {
     setActiveScreen('LOBBY');
     setPhase('MATCH_OVER');
-    setIsRolling(false);
-    
+            
     if (settings.mode === 'MULTIPLAYER' && multiplayerRoomId) {
       socketService.emit('player_action', {
         roomId: multiplayerRoomId,
@@ -287,13 +288,12 @@ export default function App() {
     setCurrentStrike('YOU');
     setPhase('INNINGS_1');
     setTargetRuns(undefined);
-    setCurrentTileIndex(1);
+    setYouTileIndex(0);
+    setAiTileIndex(0);
     setIsFreeHit(false);
-    setCommentaryMsg('Match started! Select your shot tactic and ROLL to begin.');
-    setCommentarySubMsg('Powerplay active! Overs 1 & 2 double all run outcomes!');
+    setCommentaryMsg('Match started! Race your opponent to finish your overs!');
+    setCommentarySubMsg('First to finish is not enough, you must score more runs!');
     setMyTurnAction(null);
-    setOpponentTurnAction(null);
-    setTurnTimer(10);
   };
 
 
@@ -308,9 +308,20 @@ export default function App() {
   }, [emojiEvent]);
 
   
+  // Match End conditions
+  const isUserFinished = youState.ballsBowled >= settings.maxOvers * 6 || youState.wickets >= settings.maxWickets;
+  const isAiFinished = aiState.ballsBowled >= settings.maxOvers * 6 || aiState.wickets >= settings.maxWickets;
+
   // Submit Action (Dual-Roll System)
   const handleActionSubmit = useCallback((tactic?: TacticMode) => {
-    if (isRolling || phase === 'MATCH_OVER' || myTurnAction) return;
+    if (isRolling || phase === 'MATCH_OVER') return;
+    
+    // Prevent multiple submissions
+    if (currentStrike === 'YOU' && myTurnAction) return;
+    if (currentStrike === 'AI' && opponentTurnAction) return;
+    
+    // Check if user is allowed to act
+    if (settings.mode !== 'PASS_AND_PLAY' && currentStrike !== 'YOU') return;
     
     soundFx.playClick();
     const activeTactic = tactic || selectedTactic;
@@ -321,29 +332,31 @@ export default function App() {
     else if (activeTactic === 'ATTACK') roll = [2, 3, 4, 5, 6][Math.floor(Math.random() * 5)];
     else roll = Math.floor(Math.random() * 6) + 1;
     
-    const action = { tactic: activeTactic, roll };
-    setMyTurnAction(action);
+    const action = { tactic: activeTactic, roll, catchRand: Math.random() };
     
-    if (settings.mode === 'MULTIPLAYER' && multiplayerRoomId) {
-      socketService.emit('player_action', {
-        roomId: multiplayerRoomId,
-        action: 'SUBMIT_TURN',
-        payload: action
-      });
+    if (currentStrike === 'YOU') {
+      setMyTurnAction(action);
+      if (settings.mode === 'MULTIPLAYER' && multiplayerRoomId) {
+        socketService.emit('player_action', {
+          roomId: multiplayerRoomId,
+          action: 'SUBMIT_TURN',
+          payload: action
+        });
+      }
+    } else {
+      // It's Player 2 in Pass & Play
+      setOpponentTurnAction(action);
     }
-  }, [isRolling, phase, myTurnAction, selectedTactic, settings.mode, multiplayerRoomId]);
+  }, [isRolling, phase, myTurnAction, opponentTurnAction, selectedTactic, settings.mode, multiplayerRoomId, currentStrike]);
 
   // Handle AI turn action
   useEffect(() => {
     if (activeScreen === 'GAME' && phase !== 'MATCH_OVER' && settings.mode === 'VS_AI' && !opponentTurnAction) {
+      if (currentStrike !== 'AI') return; // Only AI batter takes action
+      
       const timer = setTimeout(() => {
-        let aiTactic: TacticMode = 'ROTATE';
-        if (currentStrike === 'AI') {
-          aiTactic = 'ROTATE'; 
-        } else {
-          const bowOpts: TacticMode[] = ['FAST', 'SPIN', 'YORKER'];
-          aiTactic = bowOpts[Math.floor(Math.random() * bowOpts.length)];
-        }
+        const tactics: TacticMode[] = ['DEFEND', 'ROTATE', 'ATTACK'];
+        let aiTactic: TacticMode = tactics[Math.floor(Math.random() * tactics.length)];
         
         let roll = 1;
         if (aiTactic === 'DEFEND') roll = [1, 1, 2, 2, 3][Math.floor(Math.random() * 5)];
@@ -351,32 +364,32 @@ export default function App() {
         else if (aiTactic === 'ATTACK') roll = [2, 3, 4, 5, 6][Math.floor(Math.random() * 5)];
         else roll = Math.floor(Math.random() * 6) + 1;
 
-        setOpponentTurnAction({ tactic: aiTactic, roll });
+        setOpponentTurnAction({ tactic: aiTactic, roll, catchRand: Math.random() });
       }, 1500);
       return () => clearTimeout(timer);
     }
   }, [activeScreen, phase, settings.mode, currentStrike, opponentTurnAction]);
 
-    // Turn timer countdown and auto-roll
+  // Turn timer countdown and auto-roll
   useEffect(() => {
     if (activeScreen !== 'GAME' || phase === 'MATCH_OVER' || isRolling) return;
     
-    if (myTurnAction && opponentTurnAction) return;
+    const batterAction = currentStrike === 'YOU' ? myTurnAction : opponentTurnAction;
+    if (batterAction) return; // Stop timer if batter has acted
 
     const timer = setInterval(() => {
       setTurnTimer(prev => prev - 1);
     }, 1000);
     return () => clearInterval(timer);
-  }, [activeScreen, phase, isRolling, myTurnAction, opponentTurnAction]);
+  }, [activeScreen, phase, isRolling, myTurnAction, opponentTurnAction, currentStrike]);
 
   // Handle timer actions
   useEffect(() => {
     if (activeScreen !== 'GAME' || phase === 'MATCH_OVER' || isRolling) return;
     
-    if (turnTimer === 0 && !myTurnAction) {
-       const defaultTactic = currentStrike === 'YOU' ? 'ROTATE' : 'FAST';
-       handleActionSubmit(defaultTactic);
-    } else if (turnTimer < -4 && settings.mode === 'MULTIPLAYER' && myTurnAction && !opponentTurnAction) {
+    if (turnTimer === 0 && currentStrike === 'YOU' && !myTurnAction) {
+       handleActionSubmit('ROTATE');
+    } else if (turnTimer < -4 && settings.mode === 'MULTIPLAYER' && currentStrike !== 'YOU' && !opponentTurnAction) {
        setSettings(s => ({ ...s, mode: 'VS_AI' }));
        setCommentaryMsg('Opponent timed out.');
        setCommentarySubMsg('AI took over!');
@@ -384,20 +397,20 @@ export default function App() {
     }
   }, [turnTimer, myTurnAction, opponentTurnAction, activeScreen, phase, isRolling, currentStrike, handleActionSubmit, settings.mode]);
 
-  // Resolve both actions when ready
+  // Resolve action when ready
   useEffect(() => {
-    if (myTurnAction && opponentTurnAction && !isRolling && activeScreen === 'GAME' && phase !== 'MATCH_OVER') {
+    const batterAction = currentStrike === 'YOU' ? myTurnAction : opponentTurnAction;
+    
+    if (batterAction && !isRolling && activeScreen === 'GAME' && phase !== 'MATCH_OVER') {
       setIsRolling(true);
       soundFx.playDiceRoll();
       
-      const batterAction = currentStrike === 'YOU' ? myTurnAction : opponentTurnAction;
-      const bowlerAction = currentStrike === 'YOU' ? opponentTurnAction : myTurnAction;
-      
-      const combinedRoll = ((batterAction.roll + bowlerAction.roll) % 6) || 6;
+      const combinedRoll = batterAction.roll;
       setDiceVal(combinedRoll);
       
-      let newIndex = currentTileIndex + combinedRoll;
-      if (newIndex > 36) newIndex -= 36;
+      const isUser = currentStrike === 'YOU';
+      const currentIndex = isUser ? youTileIndex : aiTileIndex;
+      let newIndex = (currentIndex + combinedRoll) % 32;
       
       const landedTile = BOARD_TILES.find(t => t.id === newIndex) || BOARD_TILES[0];
       setLandedTileInfo(landedTile);
@@ -405,18 +418,20 @@ export default function App() {
       
       setTimeout(() => {
         setShowDiceModal(false);
-        setCurrentTileIndex(newIndex);
-        resolveOutcome(landedTile, combinedRoll, batterAction.tactic);
+        if (isUser) setYouTileIndex(newIndex);
+        else setAiTileIndex(newIndex);
+
+        resolveOutcome(landedTile, combinedRoll, batterAction.tactic, batterAction.catchRand || Math.random(), isUser);
         setMyTurnAction(null);
         setOpponentTurnAction(null);
-        setTurnTimer(10);
+        setTurnTimer(20);
         setIsRolling(false);
-      }, 2000); // Extended a bit to see both actions resolved
+      }, 2000); 
     }
-  }, [myTurnAction, opponentTurnAction, isRolling, activeScreen, phase, currentTileIndex, currentStrike]);
+  }, [myTurnAction, opponentTurnAction, isRolling, activeScreen, phase, youTileIndex, aiTileIndex, currentStrike]);
 
 // Resolve outcome of the landed tile
-  const resolveOutcome = (tile: BoardTile, rollVal: number, activeTactic: TacticMode) => {
+  const resolveOutcome = (tile: BoardTile, rollVal: number, activeTactic: TacticMode, catchRand: number = Math.random(), isUser: boolean) => {
     let runsEarned = 0;
     let isWicketOut = false;
     let isWide = false;
@@ -424,11 +439,15 @@ export default function App() {
     let cMsg = '';
     let cSub = '';
 
-    const isBattingUser = currentStrike === 'YOU';
-    const currentPlayerState = isBattingUser ? youState : aiState;
+    const isBattingUser = isUser;
+    const currentPlayerState = isUser ? youState : aiState;
     const powerplayNow = isPowerplayActive(currentPlayerState.ballsBowled);
 
     switch (tile.type) {
+      case 'START':
+        cMsg = `${currentPlayerState.name} is at the start.`;
+        soundFx.playBatHit(false);
+        break;
       case 'RUN_1':
         runsEarned = 1;
         if (powerplayNow) {
@@ -506,7 +525,7 @@ export default function App() {
         } else {
           // 50% catch probability unless DEFEND tactic
           const catchProb = activeTactic === 'DEFEND' ? 0.2 : activeTactic === 'ATTACK' ? 0.7 : 0.4;
-          if (Math.random() < catchProb) {
+          if (catchRand < catchProb) {
             isWicketOut = true;
             cMsg = `OUT! High ball taken cleanly by the fielder!`;
             soundFx.playWicket();
@@ -575,7 +594,6 @@ export default function App() {
     // Rewards System
     if (phase !== 'MATCH_OVER') {
       if (isUser) {
-        // User Batting Rewards
         if (runs >= 4) {
           setCoins(c => c + runs * 2);
           setXp(x => x + 10);
@@ -584,7 +602,6 @@ export default function App() {
           setXp(x => x + 2);
         }
       } else if (settings.mode === 'VS_AI') {
-        // User Bowling Rewards (AI is batting)
         if (isWicket) {
           setCoins(c => c + 25);
           setXp(x => x + 30);
@@ -602,9 +619,7 @@ export default function App() {
       const newWickets = isWicket ? prev.wickets + 1 : prev.wickets;
       const newLegalBalls = isWide ? prev.ballsBowled : prev.ballsBowled + 1;
 
-      // Calculate overs e.g. 5 balls = 0.5, 6 balls = 1.0, 7 balls = 1.1
       const oversVal = Math.floor(newLegalBalls / 6) + (newLegalBalls % 6) / 10;
-
       const overBallStr = `${Math.floor(prev.ballsBowled / 6)}.${(prev.ballsBowled % 6) + 1}`;
 
       const newRecord: DeliveryRecord = {
@@ -623,64 +638,42 @@ export default function App() {
 
       const newHistory = [...prev.history, newRecord];
 
-      // Check Innings Switch or Match Over
       const totalLegalBalls = settings.maxOvers * 6;
-      const isInningsFinished = newLegalBalls >= totalLegalBalls || newWickets >= settings.maxWickets;
+      const isCurrentFinished = newLegalBalls >= totalLegalBalls || newWickets >= settings.maxWickets;
+      const otherState = isUser ? aiState : youState;
+      const isOtherFinished = otherState.ballsBowled >= totalLegalBalls || otherState.wickets >= settings.maxWickets;
 
-      if (phase === 'INNINGS_1') {
-        if (isInningsFinished) {
-          setTimeout(() => {
-            setTargetRuns(newRuns + 1);
-            setPhase('INNINGS_2');
-            setCurrentStrike(isUser ? 'AI' : 'YOU');
-            setCommentaryMsg(`INNINGS BREAK! Target for 2nd Innings is ${newRuns + 1} runs.`);
-            setCommentarySubMsg(`Require ${newRuns + 1} runs from ${settings.maxOvers} overs to win.`);
-          }, 1000);
-        }
-      } else if (phase === 'INNINGS_2') {
-        // Check if target chased down
-        if (newRuns >= (targetRuns || 0)) {
-          setTimeout(() => {
-            setPhase('MATCH_OVER');
-            const userWon = isUser;
-            if (userWon) {
-              setCoins(c => c + 150); // Win bonus
-              setXp(x => x + 200);
-            } else {
-              setCoins(c => c + 50); // Loss consolation
-              setXp(x => x + 50);
-            }
-            setStats(s => ({
-              ...s,
-              matchesPlayed: s.matchesPlayed + 1,
-              matchesWon: s.matchesWon + (userWon ? 1 : 0),
-              totalRuns: s.totalRuns + (isUser ? newRuns : youState.runs),
-              totalWickets: s.totalWickets + (isUser ? newWickets : youState.wickets),
-              highestScore: Math.max(s.highestScore, isUser ? newRuns : youState.runs)
-            }));
-          }, 1000);
-        } else if (isInningsFinished) {
-          setTimeout(() => {
-            setPhase('MATCH_OVER');
-            const userWon = !isUser;
-            if (userWon) {
-              // User defended successfully
-              setCoins(c => c + 150); // Win bonus
-              setXp(x => x + 200);
-            } else {
-              setCoins(c => c + 50); // Loss consolation
-              setXp(x => x + 50);
-            }
-            setStats(s => ({
-              ...s,
-              matchesPlayed: s.matchesPlayed + 1,
-              matchesWon: s.matchesWon + (userWon ? 1 : 0),
-              totalRuns: s.totalRuns + (isUser ? newRuns : youState.runs),
-              totalWickets: s.totalWickets + (isUser ? newWickets : youState.wickets),
-              highestScore: Math.max(s.highestScore, isUser ? newRuns : youState.runs)
-            }));
-          }, 1000);
-        }
+      if (isCurrentFinished && isOtherFinished) {
+        setTimeout(() => {
+          setPhase('MATCH_OVER');
+          const userFinalRuns = isUser ? newRuns : youState.runs;
+          const aiFinalRuns = !isUser ? newRuns : aiState.runs;
+          const userWon = userFinalRuns >= aiFinalRuns;
+          
+          if (userWon) {
+            setCoins(c => c + 150);
+            setXp(x => x + 200);
+          } else {
+            setCoins(c => c + 50);
+            setXp(x => x + 50);
+          }
+          setStats(s => ({
+            ...s,
+            matchesPlayed: s.matchesPlayed + 1,
+            matchesWon: s.matchesWon + (userWon ? 1 : 0),
+            totalRuns: s.totalRuns + userFinalRuns,
+            totalWickets: s.totalWickets + (isUser ? newWickets : youState.wickets),
+            highestScore: Math.max(s.highestScore, userFinalRuns)
+          }));
+        }, 1000);
+      } else {
+        setTimeout(() => {
+           if (!isOtherFinished && (!isWide || isCurrentFinished)) {
+              setCurrentStrike(isUser ? 'AI' : 'YOU');
+           } else if (isCurrentFinished && !isOtherFinished) {
+              setCurrentStrike(isUser ? 'AI' : 'YOU');
+           }
+        }, 500);
       }
 
       return {
@@ -746,7 +739,7 @@ export default function App() {
             setPhase('INNINGS_1');
             setTargetRuns(undefined);
             setCommentaryMsg('Match started!');
-            setCommentarySubMsg('First to bat is selected.');
+            setCommentarySubMsg('Race your opponent to finish your overs!');
             setActiveScreen('GAME');
           }}
         />
@@ -842,17 +835,17 @@ export default function App() {
           <Scoreboard
             youState={youState}
             aiState={aiState}
-            currentStrike={currentStrike}
-            phase={phase}
-            maxOvers={settings.maxOvers}
             isPowerplay={isCurrentPowerplay}
-            targetRuns={targetRuns}
+            currentStrike={currentStrike}
+            turnTimer={activeScreen === 'GAME' && phase !== 'MATCH_OVER' && !isRolling ? turnTimer : undefined}
           />
 
           {/* Center Circular Cricket Board */}
           <CricketBoard
-            currentTileIndex={currentTileIndex}
-            isRolling={isRolling}
+            youTileIndex={youTileIndex}
+            aiTileIndex={aiTileIndex}
+            youIsRolling={isRolling && currentStrike === 'YOU'}
+            aiIsRolling={isRolling && currentStrike !== 'YOU'}
             ground={selectedGround}
           />
 
@@ -871,29 +864,15 @@ export default function App() {
           <OversHistory history={activePlayer.history} />
 
           {/* Action Controls (Defend, Rotate, Attack, ROLL) */}
-          
           <div className="flex flex-col items-center">
-            {/* Timer visualizer */}
-            {activeScreen === 'GAME' && phase !== 'MATCH_OVER' && !isRolling && (
-              <div className="w-full max-w-xl mx-auto px-4 mb-2 flex items-center justify-between">
-                <span className="text-xs font-bold text-stone-400">TURN TIMER</span>
-                <div className="flex-1 mx-3 h-2 bg-stone-800 rounded-full overflow-hidden border border-stone-700">
-                  <div 
-                    className={`h-full transition-all duration-1000 ${turnTimer <= 3 ? 'bg-rose-500' : 'bg-amber-500'}`} 
-                    style={{ width: `${(turnTimer / 10) * 100}%` }}
-                  />
-                </div>
-                <span className={`text-sm font-black ${turnTimer <= 3 ? 'text-rose-500' : 'text-amber-500'}`}>{turnTimer}s</span>
-              </div>
-            )}
             <ActionControls
               selectedTactic={selectedTactic}
               onSelectTactic={setSelectedTactic}
               onRoll={() => handleActionSubmit()}
-              isRolling={isRolling || myTurnAction !== null}
-              disabled={phase === 'MATCH_OVER'}
+              isRolling={isRolling || (currentStrike === 'YOU' ? myTurnAction !== null : opponentTurnAction !== null)}
+              disabled={phase === 'MATCH_OVER' || (settings.mode !== 'PASS_AND_PLAY' && currentStrike !== 'YOU')}
               showEmoji={!!multiplayerRoomId}
-              isBatting={currentStrike === 'YOU'}
+              isBatting={true}
               onSendEmoji={(emoji) => {
                 if (multiplayerRoomId) {
                   socketService.emit('player_action', {
@@ -906,7 +885,6 @@ export default function App() {
               }}
             />
           </div>
-
         </div>
       )}
 

@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+const fs = require('fs');
+
+let code = `import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { socketService } from '../utils/socket';
 
@@ -137,7 +139,7 @@ export const TossScreen: React.FC<TossScreenProps> = ({
             </div>
             
             <h3 className="text-2xl font-black text-white mb-6 uppercase tracking-wider">
-              {winnerId === myId ? 'You won the toss!' : `${opponentName} won the toss!`}
+              {winnerId === myId ? 'You won the toss!' : \`\${opponentName} won the toss!\`}
             </h3>
             
             <p className="text-amber-500 font-bold text-xl uppercase tracking-widest animate-pulse">
@@ -149,3 +151,5 @@ export const TossScreen: React.FC<TossScreenProps> = ({
     </div>
   );
 };
+`
+fs.writeFileSync('src/components/TossScreen.tsx', code);
