@@ -25,7 +25,7 @@ jobs:
             SHORT_SHA=${SHA:0:7}
             
             # --- IMPORTANT: UPDATE THIS PATH TO WHERE YOUR PROJECT IS ON THE VPS ---
-            PROJECT_DIR="~/sixappeal" # Replace with your actual path (e.g., /var/www/cricket)
+            PROJECT_DIR="/var/www/game"
             
             cd $PROJECT_DIR
             
