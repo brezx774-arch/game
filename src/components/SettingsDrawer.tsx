@@ -1,7 +1,9 @@
 import React from 'react';
-import { X, RotateCcw, Volume2, VolumeX, Trophy, Users, Bot, Sliders } from 'lucide-react';
+import { X, RotateCcw, Volume2, VolumeX, Trophy, Users, Bot, Sliders, LogOut } from 'lucide-react';
 import { GameSettings } from '../types';
 import { soundFx } from '../utils/audio';
+import { auth } from '../lib/firebase';
+import { signOut } from 'firebase/auth';
 
 interface SettingsDrawerProps {
   isOpen: boolean;
@@ -190,6 +192,17 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             <span>New Match</span>
           </button>
           )}
+
+          <button
+            onClick={() => {
+              soundFx.playClick();
+              signOut(auth);
+            }}
+            className="w-full mt-4 py-3 rounded-xl bg-transparent border border-stone-800 text-stone-500 hover:text-stone-300 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-stone-800 transition-colors cursor-pointer active:scale-98"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out</span>
+          </button>
         </div>
       </div>
     </div>

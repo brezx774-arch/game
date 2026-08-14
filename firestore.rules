@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Basic validation for the User Profile
+    function isValidUser(data) {
+      return data.keys().hasAll(['coins', 'xp', 'stats', 'dailyStreak', 'lastLoginDate']) &&
+             data.coins is number &&
+             data.xp is number &&
+             data.dailyStreak is number &&
+             data.lastLoginDate is string &&
+             data.stats.keys().hasAll(['matchesPlayed', 'matchesWon', 'totalRuns', 'totalWickets', 'highestScore']);
+    }
+
+    match /users/{userId} {
+      // Anyone logged in can read the leaderboard (user profiles)
+      allow read: if request.auth != null;
+      
+      allow create: if request.auth != null && 
+                    request.auth.uid == userId && 
+                    isValidUser(request.resource.data);
+                    
+      allow update: if request.auth != null && 
+                    request.auth.uid == userId && 
+                    isValidUser(request.resource.data) &&
+                    request.resource.data.keys().hasOnly(['coins', 'xp', 'stats', 'dailyStreak', 'lastLoginDate', 'displayName', 'photoURL']);
+    }
+  }
+}

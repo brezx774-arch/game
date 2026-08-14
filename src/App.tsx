@@ -31,6 +31,11 @@ import { LobbyScreen } from './components/LobbyScreen';
 import { TossScreen } from './components/TossScreen';
 import { MatchPlayersBanner } from './components/MatchPlayersBanner';
 
+import { LoginScreen } from './components/LoginScreen';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { auth } from './lib/firebase';
+import { useProfile } from './hooks/useProfile';
+
 export const STADIUMS: Ground[] = [
   { 
     id: 'lords', 
@@ -80,6 +85,18 @@ export const STADIUMS: Ground[] = [
 ];
 
 export default function App() {
+  // Auth State
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Settings
   const [settings, setSettings] = useState<GameSettings>({
     maxOvers: 5,
@@ -164,33 +181,38 @@ export default function App() {
   const [commentaryMsg, setCommentaryMsg] = useState<string>('You worked away for one.');
   const [commentarySubMsg, setCommentarySubMsg] = useState<string>('Powerplay doubles it!');
 
-  // Player Profile State (Persistent)
-  const [coins, setCoins] = useState<number>(() => {
-    return parseInt(localStorage.getItem('cricket_coins') || '150', 10);
-  });
-  const [xp, setXp] = useState<number>(() => {
-    return parseInt(localStorage.getItem('cricket_xp') || '450', 10);
-  });
-  const [stats, setStats] = useState(() => {
-    const saved = localStorage.getItem('cricket_stats');
-    return saved ? JSON.parse(saved) : { matchesPlayed: 0, matchesWon: 0, totalRuns: 0, totalWickets: 0, highestScore: 0 };
-  });
+  // Player Profile State (Firestore Sync)
+  const { profile, updateProfile, profileLoading } = useProfile(user);
+  
+  const coins = profile?.coins || 0;
+  const xp = profile?.xp || 0;
+  const stats = profile?.stats || { matchesPlayed: 0, matchesWon: 0, totalRuns: 0, totalWickets: 0, highestScore: 0 };
+  const dailyStreak = profile?.dailyStreak || 0;
+  const lastLoginDate = profile?.lastLoginDate || '';
 
-  const [dailyStreak, setDailyStreak] = useState<number>(() => {
-    return parseInt(localStorage.getItem('cricket_daily_streak') || '0', 10);
-  });
-  const [lastLoginDate, setLastLoginDate] = useState<string>(() => {
-    return localStorage.getItem('cricket_last_login') || '';
-  });
+  const setCoins = (updater: any) => {
+    const newVal = typeof updater === 'function' ? updater(profile.coins) : updater;
+    updateProfile({ coins: newVal });
+  };
+  const setXp = (updater: any) => {
+    const newVal = typeof updater === 'function' ? updater(profile.xp) : updater;
+    updateProfile({ xp: newVal });
+  };
+  const setStats = (updater: any) => {
+    const newVal = typeof updater === 'function' ? updater(profile.stats) : updater;
+    updateProfile({ stats: newVal });
+  };
+  const setDailyStreak = (updater: any) => {
+    const newVal = typeof updater === 'function' ? updater(profile.dailyStreak) : updater;
+    updateProfile({ dailyStreak: newVal });
+  };
+  const setLastLoginDate = (updater: any) => {
+    const newVal = typeof updater === 'function' ? updater(profile.lastLoginDate) : updater;
+    updateProfile({ lastLoginDate: newVal });
+  };
+
   const [showDailyReward, setShowDailyReward] = useState<boolean>(false);
   const [dailyRewardAmount, setDailyRewardAmount] = useState<number>(0);
-
-  // Persist Profile
-  useEffect(() => {
-    localStorage.setItem('cricket_coins', coins.toString());
-    localStorage.setItem('cricket_xp', xp.toString());
-    localStorage.setItem('cricket_stats', JSON.stringify(stats));
-  }, [coins, xp, stats]);
 
   // Daily Reward Logic
   useEffect(() => {
@@ -212,8 +234,7 @@ export default function App() {
       setLastLoginDate(today);
       setShowDailyReward(true);
       
-      localStorage.setItem('cricket_daily_streak', newStreak.toString());
-      localStorage.setItem('cricket_last_login', today);
+      // Persisted via updateProfile
     }
   }, [lastLoginDate, dailyStreak]);
 
@@ -313,7 +334,7 @@ export default function App() {
   const isAiFinished = aiState.ballsBowled >= settings.maxOvers * 6 || aiState.wickets >= settings.maxWickets;
 
   // Submit Action (Dual-Roll System)
-  const handleActionSubmit = useCallback((tactic?: TacticMode) => {
+  const handleActionSubmit = useCallback(async (tactic?: TacticMode) => {
     if (isRolling || phase === 'MATCH_OVER') return;
     
     // Prevent multiple submissions
@@ -326,26 +347,31 @@ export default function App() {
     soundFx.playClick();
     const activeTactic = tactic || selectedTactic;
     
-    let roll = 1;
-    if (activeTactic === 'DEFEND') roll = [1, 1, 2, 2, 3][Math.floor(Math.random() * 5)];
-    else if (activeTactic === 'ROTATE') roll = [1, 2, 3, 4][Math.floor(Math.random() * 4)];
-    else if (activeTactic === 'ATTACK') roll = [2, 3, 4, 5, 6][Math.floor(Math.random() * 5)];
-    else roll = Math.floor(Math.random() * 6) + 1;
-    
-    const action = { tactic: activeTactic, roll, catchRand: Math.random() };
-    
-    if (currentStrike === 'YOU') {
-      setMyTurnAction(action);
-      if (settings.mode === 'MULTIPLAYER' && multiplayerRoomId) {
-        socketService.emit('player_action', {
-          roomId: multiplayerRoomId,
-          action: 'SUBMIT_TURN',
-          payload: action
-        });
+    try {
+      const response = await fetch('/api/roll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tactic: activeTactic })
+      });
+      const data = await response.json();
+      
+      const action = { tactic: activeTactic, roll: data.roll, catchRand: data.catchRand };
+      
+      if (currentStrike === 'YOU') {
+        setMyTurnAction(action);
+        if (settings.mode === 'MULTIPLAYER' && multiplayerRoomId) {
+          socketService.emit('player_action', {
+            roomId: multiplayerRoomId,
+            action: 'SUBMIT_TURN',
+            payload: action
+          });
+        }
+      } else {
+        // It's Player 2 in Pass & Play
+        setOpponentTurnAction(action);
       }
-    } else {
-      // It's Player 2 in Pass & Play
-      setOpponentTurnAction(action);
+    } catch (err) {
+      console.error('Failed to fetch roll', err);
     }
   }, [isRolling, phase, myTurnAction, opponentTurnAction, selectedTactic, settings.mode, multiplayerRoomId, currentStrike]);
 
@@ -354,17 +380,21 @@ export default function App() {
     if (activeScreen === 'GAME' && phase !== 'MATCH_OVER' && settings.mode === 'VS_AI' && !opponentTurnAction) {
       if (currentStrike !== 'AI') return; // Only AI batter takes action
       
-      const timer = setTimeout(() => {
+      const timer = setTimeout(async () => {
         const tactics: TacticMode[] = ['DEFEND', 'ROTATE', 'ATTACK'];
         let aiTactic: TacticMode = tactics[Math.floor(Math.random() * tactics.length)];
         
-        let roll = 1;
-        if (aiTactic === 'DEFEND') roll = [1, 1, 2, 2, 3][Math.floor(Math.random() * 5)];
-        else if (aiTactic === 'ROTATE') roll = [1, 2, 3, 4][Math.floor(Math.random() * 4)];
-        else if (aiTactic === 'ATTACK') roll = [2, 3, 4, 5, 6][Math.floor(Math.random() * 5)];
-        else roll = Math.floor(Math.random() * 6) + 1;
-
-        setOpponentTurnAction({ tactic: aiTactic, roll, catchRand: Math.random() });
+        try {
+          const response = await fetch('/api/roll', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tactic: aiTactic })
+          });
+          const data = await response.json();
+          setOpponentTurnAction({ tactic: aiTactic, roll: data.roll, catchRand: data.catchRand });
+        } catch (err) {
+          console.error('Failed to fetch AI roll', err);
+        }
       }, 1500);
       return () => clearTimeout(timer);
     }
@@ -720,6 +750,18 @@ export default function App() {
     }
   }, [settings.mode]);
 
+  if (authLoading || (user && profileLoading)) {
+    return (
+      <div className="min-h-screen bg-stone-950 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginScreen />;
+  }
+
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 font-sans flex flex-col justify-between selection:bg-amber-500 selection:text-stone-950 relative overflow-x-hidden">
       {/* Background Stadium Glow & Vignette */}
@@ -811,6 +853,9 @@ export default function App() {
           showDailyReward={showDailyReward}
           dailyRewardAmount={dailyRewardAmount}
           onClaimDailyReward={claimDailyReward}
+          onSpendCoins={(amount) => updateProfile({ coins: coins - amount })}
+          playerName={profile?.displayName || user.displayName || 'Player'}
+          playerAvatar={profile?.photoURL || user.photoURL || ''}
         />
       ) : (
         <div className="relative z-10 flex-1 flex flex-col justify-between w-full max-w-2xl mx-auto pb-4">

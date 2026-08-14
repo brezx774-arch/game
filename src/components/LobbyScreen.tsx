@@ -27,6 +27,9 @@ interface LobbyScreenProps {
   showDailyReward: boolean;
   dailyRewardAmount: number;
   onClaimDailyReward: () => void;
+  onSpendCoins: (amount: number) => void;
+  playerName?: string;
+  playerAvatar?: string;
 }
 
 export const LobbyScreen: React.FC<LobbyScreenProps> = ({
@@ -41,9 +44,13 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   dailyStreak,
   showDailyReward,
   dailyRewardAmount,
-  onClaimDailyReward
+  onClaimDailyReward,
+  onSpendCoins,
+  playerName,
+  playerAvatar
 }) => {
   const [activeTab, setActiveTab] = useState<'HOME' | 'PROFILE' | 'STORE'>('HOME');
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [isSelecting, setIsSelecting] = useState(false);
   const [isMatchmaking, setIsMatchmaking] = useState(false);
   const [createdRoomCode, setCreatedRoomCode] = useState<string | null>(null);
@@ -479,7 +486,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                             soundFx.playClick();
                             setIsMatchmaking(true);
                             socketService.connect();
-                            socketService.emit('create_room');
+                            socketService.emit('create_room', { name: playerName, avatar: playerAvatar });
                           }}
                           className="h-14 rounded-2xl bg-gradient-to-b from-purple-500 to-purple-700 border-b-[6px] border-purple-900 text-white flex items-center justify-center gap-2 relative overflow-hidden shadow-lg w-full"
                         >
@@ -626,12 +633,60 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
               <Store className="text-[#facc15]" /> Store
             </h2>
             
-            <div className="w-full flex flex-col items-center justify-center h-64 bg-[#1e293b] border-2 border-[#334155] border-dashed rounded-xl p-6 text-center">
-               <Store className="w-16 h-16 text-stone-600 mb-4" />
-               <h3 className="text-xl font-black text-stone-400 mb-2">Coming Soon</h3>
-               <p className="text-sm text-stone-500 font-semibold">
-                 Use your coins to buy custom dice, new bats, and exclusive player avatars in future updates!
-               </p>
+            <div className="w-full space-y-4 pb-20">
+              {/* Item 1: Golden Bat */}
+              <div className="bg-stone-800 rounded-2xl p-4 flex items-center justify-between border border-stone-700 shadow-lg">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center border border-amber-500/50">
+                    <span className="text-2xl">🏏</span>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-stone-100">Golden Bat</h4>
+                    <p className="text-xs text-stone-400">+10% XP per match</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    if (coins >= 1000) {
+                      soundFx.playClick();
+                      onSpendCoins(1000);
+                      alert('You bought the Golden Bat! (Visual only for now)');
+                    } else {
+                      alert('Not enough coins!');
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-xl font-black text-sm uppercase tracking-wider ${coins >= 1000 ? 'bg-amber-500 text-stone-900 shadow-lg shadow-amber-500/20' : 'bg-stone-700 text-stone-500'}`}
+                >
+                  1000 🪙
+                </button>
+              </div>
+
+              {/* Item 2: VIP Avatar Frame */}
+              <div className="bg-stone-800 rounded-2xl p-4 flex items-center justify-between border border-stone-700 shadow-lg">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center border border-emerald-500/50">
+                    <span className="text-2xl">🖼️</span>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-stone-100">VIP Frame</h4>
+                    <p className="text-xs text-stone-400">Stand out on Leaderboards</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    if (coins >= 500) {
+                      soundFx.playClick();
+                      onSpendCoins(500);
+                      alert('You bought the VIP Frame! (Visual only for now)');
+                    } else {
+                      alert('Not enough coins!');
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-xl font-black text-sm uppercase tracking-wider ${coins >= 500 ? 'bg-amber-500 text-stone-900 shadow-lg shadow-amber-500/20' : 'bg-stone-700 text-stone-500'}`}
+                >
+                  500 🪙
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

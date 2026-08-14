@@ -16,29 +16,53 @@ async function startServer() {
     },
   });
 
+  app.use(express.json());
+
+  // Game Logic API
+  app.post('/api/roll', (req, res) => {
+    const { tactic } = req.body;
+    
+    let roll = 1;
+    if (tactic === 'DEFEND') roll = [1, 1, 2, 2, 3][Math.floor(Math.random() * 5)];
+    else if (tactic === 'ROTATE') roll = [1, 2, 3, 4][Math.floor(Math.random() * 4)];
+    else if (tactic === 'ATTACK') roll = [2, 3, 4, 5, 6][Math.floor(Math.random() * 5)];
+    else roll = Math.floor(Math.random() * 6) + 1;
+
+    res.json({ roll, catchRand: Math.random() });
+  });
+
   // Basic Matchmaking Logic
-  const waitingPlayers: Socket[] = [];
-  const customRooms: Record<string, Socket[]> = {};
+  const waitingPlayers: { socket: Socket, info: any }[] = [];
+  const customRooms: Record<string, { socket: Socket, info: any }[]> = {};
 
   io.on('connection', (socket) => {
     console.log(`Player connected: ${socket.id}`);
 
-    socket.on('join_matchmaking', () => {
+    socket.on('join_matchmaking', (info: any = {}) => {
       console.log(`Player ${socket.id} joined matchmaking`);
       
       if (waitingPlayers.length > 0) {
         // Match found!
-        const opponent = waitingPlayers.shift();
-        if (opponent) {
+        const opponentData = waitingPlayers.shift();
+        if (opponentData) {
+          const opponent = opponentData.socket;
           const roomId = `room_${socket.id}_${opponent.id}`;
           
           socket.join(roomId);
           opponent.join(roomId);
 
           // Tell both players they matched
-          io.to(roomId).emit('match_found', {
+          // Send match_found to socket with opponent's info
+          socket.emit('match_found', {
             roomId,
-            players: [socket.id, opponent.id]
+            players: [opponent.id, socket.id],
+            opponentInfo: opponentData.info
+          });
+          // Send match_found to opponent with socket's info
+          opponent.emit('match_found', {
+            roomId,
+            players: [opponent.id, socket.id],
+            opponentInfo: info
           });
           
           // Randomly decide who bats first
@@ -51,12 +75,12 @@ async function startServer() {
         }
       } else {
         // Wait for an opponent
-        waitingPlayers.push(socket);
+        waitingPlayers.push({ socket, info });
         socket.emit('waiting_for_opponent');
 
         // After 4 seconds, if still waiting, give them an AI match disguised as a real player
         setTimeout(() => {
-          const index = waitingPlayers.indexOf(socket);
+          const index = waitingPlayers.findIndex(p => p.socket === socket);
           if (index !== -1) {
             // Still waiting
             waitingPlayers.splice(index, 1);
@@ -83,25 +107,32 @@ async function startServer() {
       }
     });
 
-    socket.on('create_room', () => {
+    socket.on('create_room', (info: any = {}) => {
       const roomCode = Math.floor(1000 + Math.random() * 9000).toString();
-      customRooms[roomCode] = [socket];
+      customRooms[roomCode] = [{ socket, info }];
       socket.join(roomCode);
       socket.emit('room_created', { roomCode });
       console.log(`Player ${socket.id} created room ${roomCode}`);
     });
 
     socket.on('join_room', (data) => {
-      const { roomCode } = data;
+      const { roomCode, info = {} } = data;
       if (customRooms[roomCode] && customRooms[roomCode].length === 1) {
-        const opponent = customRooms[roomCode][0];
-        customRooms[roomCode].push(socket);
+        const opponentData = customRooms[roomCode][0];
+        const opponent = opponentData.socket;
+        customRooms[roomCode].push({ socket, info });
         socket.join(roomCode);
         
         // Match found!
-        io.to(roomCode).emit('match_found', {
+        socket.emit('match_found', {
           roomId: roomCode,
-          players: [opponent.id, socket.id]
+          players: [opponent.id, socket.id],
+          opponentInfo: opponentData.info
+        });
+        opponent.emit('match_found', {
+          roomId: roomCode,
+          players: [opponent.id, socket.id],
+          opponentInfo: info
         });
 
         // Randomly decide who bats first
@@ -120,14 +151,14 @@ async function startServer() {
     });
 
     socket.on('cancel_matchmaking', () => {
-      const index = waitingPlayers.indexOf(socket);
+      const index = waitingPlayers.findIndex(p => p.socket === socket);
       if (index !== -1) {
         waitingPlayers.splice(index, 1);
       }
       
       for (const code in customRooms) {
-        if (customRooms[code].includes(socket)) {
-          customRooms[code] = customRooms[code].filter(s => s !== socket);
+        if (customRooms[code].some(p => p.socket === socket)) {
+          customRooms[code] = customRooms[code].filter(p => p.socket !== socket);
           if (customRooms[code].length === 0) {
             delete customRooms[code];
           }
@@ -144,14 +175,14 @@ async function startServer() {
 
     socket.on('disconnect', () => {
       console.log(`Player disconnected: ${socket.id}`);
-      const index = waitingPlayers.indexOf(socket);
+      const index = waitingPlayers.findIndex(p => p.socket === socket);
       if (index !== -1) {
         waitingPlayers.splice(index, 1);
       }
       
       for (const code in customRooms) {
-        if (customRooms[code].includes(socket)) {
-          customRooms[code] = customRooms[code].filter(s => s !== socket);
+        if (customRooms[code].some(p => p.socket === socket)) {
+          customRooms[code] = customRooms[code].filter(p => p.socket !== socket);
           if (customRooms[code].length === 0) {
             delete customRooms[code];
           }
