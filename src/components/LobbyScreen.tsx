@@ -315,7 +315,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', bounce: 0.5, duration: 0.8 }}
-              className="relative flex flex-col items-center justify-center mb-6 mt-2"
+              className="relative flex flex-col items-center justify-center mb-3 mt-0"
             >
               <div className="relative z-10 text-center">
                 <h1 className="text-5xl sm:text-6xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-600 drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] font-sans uppercase leading-[0.95] pt-1">
