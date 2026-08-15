@@ -187,7 +187,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   if (showLeaderboard) return <LeaderboardScreen onBack={() => setShowLeaderboard(false)} />;
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-4 z-10 w-full max-w-md mx-auto relative pb-24 pt-8">
+    <div className="flex flex-col items-center h-dvh p-4 z-10 w-full max-w-md mx-auto relative pt-8 overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute top-20 -left-12 w-48 h-48 bg-amber-500/10 rounded-full blur-[60px] pointer-events-none" />
       <div className="absolute top-60 -right-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-[60px] pointer-events-none" />
@@ -299,6 +299,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         )}
       </AnimatePresence>
 
+      <div className="flex-1 overflow-y-auto w-full pb-24 min-h-0">
       {/* Main Content Area */}
       <AnimatePresence mode="wait">
         {activeTab === 'HOME' && (
@@ -696,8 +697,9 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         )}
       </AnimatePresence>
 
+      </div>
       {/* Bottom Navigation */}
-      <div className="absolute bottom-4 left-4 right-4 bg-[#1e293b] border-2 border-[#334155] rounded-2xl p-2 flex justify-between shadow-2xl">
+      <div className="bottom-4 left-4 right-4 bg-[#1e293b] border-2 border-[#334155] rounded-2xl p-2 flex justify-between shadow-2xl">
          <NavButton 
            icon={<Home />} 
            label="Home" 
