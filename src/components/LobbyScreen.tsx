@@ -315,10 +315,10 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', bounce: 0.5, duration: 0.8 }}
-              className="relative flex flex-col items-center justify-center mb-20 mt-4"
+              className="relative flex flex-col items-center justify-center mb-6 mt-2"
             >
               <div className="relative z-10 text-center">
-                <h1 className="text-6xl sm:text-7xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-600 drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] font-sans uppercase leading-none">
+                <h1 className="text-5xl sm:text-6xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-600 drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] font-sans uppercase leading-[0.95] pt-1">
                   CRICKET<br />ROYALE
                 </h1>
                 <motion.div 
@@ -341,7 +341,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
             </motion.div>
 
             {/* Main Actions */}
-            <div className="w-full flex flex-col gap-5 px-2">
+            <div className="w-full flex flex-col gap-3 px-2">
               <AnimatePresence mode="wait">
                 {isMatchmaking ? (
                   <motion.div
@@ -445,7 +445,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={handlePlayClick}
-                      className="group w-full h-24 rounded-3xl bg-gradient-to-b from-[#10b981] via-[#059669] to-[#047857] border-b-[8px] border-[#064e3b] text-white flex items-center justify-center gap-4 relative overflow-hidden"
+                      className="group w-full h-20 rounded-3xl bg-gradient-to-b from-[#10b981] via-[#059669] to-[#047857] border-b-[8px] border-[#064e3b] text-white flex items-center justify-center gap-4 relative overflow-hidden"
                     >
                        <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/20 rounded-t-3xl" />
                        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-30 mix-blend-overlay" />
@@ -475,7 +475,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                           socketService.connect();
                           socketService.emit('join_matchmaking');
                         }}
-                        className="w-full h-14 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-700 border-b-[6px] border-blue-900 text-white flex items-center justify-center gap-3 relative overflow-hidden shadow-lg"
+                        className="w-full h-12 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-700 border-b-[6px] border-blue-900 text-white flex items-center justify-center gap-3 relative overflow-hidden shadow-lg"
                       >
                          <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-2xl" />
                          <User className="w-5 h-5 fill-white drop-shadow-md" />
@@ -492,13 +492,13 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                             socketService.connect();
                             socketService.emit('create_room', { name: playerName, avatar: playerAvatar });
                           }}
-                          className="h-14 rounded-2xl bg-gradient-to-b from-purple-500 to-purple-700 border-b-[6px] border-purple-900 text-white flex items-center justify-center gap-2 relative overflow-hidden shadow-lg w-full"
+                          className="h-12 rounded-2xl bg-gradient-to-b from-purple-500 to-purple-700 border-b-[6px] border-purple-900 text-white flex items-center justify-center gap-2 relative overflow-hidden shadow-lg w-full"
                         >
                           <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-2xl" />
                           <span className="text-sm font-black tracking-widest uppercase">Create Room</span>
                         </motion.button>
                         
-                        <div className="flex gap-2 h-14">
+                        <div className="flex gap-2 h-12">
                           <input 
                             id="room-code-input"
                             type="text" 
@@ -542,7 +542,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setShowLeaderboard(true)}
-                        className="h-16 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-stone-950 hover:border-b-[4px] hover:translate-y-[2px] active:border-b-[0px] active:translate-y-[6px] text-stone-200 flex flex-col items-center justify-center gap-1 shadow-xl relative overflow-hidden transition-all"
+                        className="h-14 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-stone-950 hover:border-b-[4px] hover:translate-y-[2px] active:border-b-[0px] active:translate-y-[6px] text-stone-200 flex flex-col items-center justify-center gap-1 shadow-xl relative overflow-hidden transition-all"
                       >
                          <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/5 rounded-t-2xl" />
                          <Trophy className="w-5 h-5 text-[#facc15] drop-shadow-sm" />
@@ -556,7 +556,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                           soundFx.playClick();
                           onOpenSettings();
                         }}
-                        className="h-16 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-black text-stone-200 flex flex-col items-center justify-center gap-1 shadow-xl relative overflow-hidden group"
+                        className="h-14 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-black text-stone-200 flex flex-col items-center justify-center gap-1 shadow-xl relative overflow-hidden group"
                       >
                          <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/5 rounded-t-2xl group-hover:bg-white/10 transition-colors" />
                          <Settings className="w-5 h-5 text-stone-400 group-hover:rotate-90 transition-transform duration-500" />
