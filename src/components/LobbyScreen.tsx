@@ -699,7 +699,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 
       </div>
       {/* Bottom Navigation */}
-      <div className="bottom-4 left-4 right-4 bg-[#1e293b] border-2 border-[#334155] rounded-2xl p-2 flex justify-between shadow-2xl">
+      <div className="absolute bottom-4 left-4 right-4 bg-[#1e293b] border-2 border-[#334155] rounded-2xl p-2 flex justify-between shadow-2xl">
          <NavButton 
            icon={<Home />} 
            label="Home" 
