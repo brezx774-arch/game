@@ -144,7 +144,7 @@ export const CricketBoard: React.FC<CricketBoardProps> = ({
   };
 
   return (
-    <div className={`relative w-full max-w-[280px] sm:max-w-sm mx-auto aspect-square my-2 sm:my-3 ${ground?.grassColorClass || 'bg-emerald-800'} rounded-[3rem] shadow-2xl overflow-hidden`}>
+    <div className={`relative h-full max-h-[420px] aspect-square mx-auto ${ground?.grassColorClass || 'bg-emerald-800'} rounded-[3rem] shadow-2xl overflow-hidden`}>
       {/* Grass pattern overlay */}
       <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{
         backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.2) 10px, rgba(0,0,0,0.2) 20px)'
