@@ -1,18 +1,44 @@
-import React, { useState } from 'react';
-import { signInWithPopup } from 'firebase/auth';
+import React, { useState, useEffect } from 'react';
+import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { auth, googleProvider, facebookProvider } from '../lib/firebase';
-import { Trophy, Mail, Lock } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { motion } from 'motion/react';
+import { Capacitor } from '@capacitor/core';
 
 export const LoginScreen: React.FC = () => {
   const [error, setError] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Check for the result of a redirect login (essential for Android APK)
+  useEffect(() => {
+    const checkRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log("Successfully logged in via redirect");
+        }
+      } catch (err: any) {
+        console.error("Redirect error:", err);
+        setError(err.message || 'Failed during redirect login. Check Authorized Domains.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    checkRedirectResult();
+  }, []);
 
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
       setError('');
-      await signInWithPopup(auth, googleProvider);
+      if (Capacitor.isNativePlatform()) {
+        // Native APKs block popups. We MUST use redirect.
+        await signInWithRedirect(auth, googleProvider);
+      } else {
+        // Web browsers prefer popups
+        await signInWithPopup(auth, googleProvider);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to sign in with Google');
       setLoading(false);
@@ -23,7 +49,11 @@ export const LoginScreen: React.FC = () => {
     try {
       setLoading(true);
       setError('');
-      await signInWithPopup(auth, facebookProvider);
+      if (Capacitor.isNativePlatform()) {
+        await signInWithRedirect(auth, facebookProvider);
+      } else {
+        await signInWithPopup(auth, facebookProvider);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to sign in with Facebook');
       setLoading(false);
