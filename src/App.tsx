@@ -791,7 +791,7 @@ export default function App() {
     );
   }
 
-  if (false && !user) {
+  if (!user) {
     return <LoginScreen />;
   }
 
