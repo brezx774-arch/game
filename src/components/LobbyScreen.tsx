@@ -308,7 +308,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="w-full flex flex-col items-center flex-1 justify-center -mt-8"
+            className="w-full flex flex-col items-center flex-1 justify-center"
           >
             {/* Hero Logo */}
             <motion.div 
