@@ -341,7 +341,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
             </motion.div>
 
             {/* Main Actions */}
-            <div className="w-full flex flex-col gap-3 px-2">
+            <div className="w-full flex flex-col gap-2 px-2">
               <AnimatePresence mode="wait">
                 {isMatchmaking ? (
                   <motion.div
@@ -445,7 +445,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={handlePlayClick}
-                      className="group w-full h-20 rounded-3xl bg-gradient-to-b from-[#10b981] via-[#059669] to-[#047857] border-b-[8px] border-[#064e3b] text-white flex items-center justify-center gap-4 relative overflow-hidden"
+                      className="group w-full h-18 rounded-3xl bg-gradient-to-b from-[#10b981] via-[#059669] to-[#047857] border-b-[8px] border-[#064e3b] text-white flex items-center justify-center gap-4 relative overflow-hidden"
                     >
                        <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/20 rounded-t-3xl" />
                        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-30 mix-blend-overlay" />
