@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 import { auth, googleProvider, facebookProvider } from '../lib/firebase';
 import { Trophy } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Capacitor } from '@capacitor/core';
-
 export const LoginScreen: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
-
-  // Check for the result of a redirect login (essential for Android APK)
   useEffect(() => {
     const checkRedirectResult = async () => {
       try {
@@ -24,19 +22,19 @@ export const LoginScreen: React.FC = () => {
         setLoading(false);
       }
     };
-    
     checkRedirectResult();
   }, []);
-
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
       setError('');
       if (Capacitor.isNativePlatform()) {
-        // Native APKs block popups. We MUST use redirect.
-        await signInWithRedirect(auth, googleProvider);
+        const result = await FirebaseAuthentication.signInWithGoogle();
+        const idToken = result.credential?.idToken;
+        if (!idToken) throw new Error('No ID token returned from native sign-in');
+        const credential = GoogleAuthProvider.credential(idToken);
+        await signInWithCredential(auth, credential);
       } else {
-        // Web browsers prefer popups
         await signInWithPopup(auth, googleProvider);
       }
     } catch (err: any) {
@@ -44,7 +42,6 @@ export const LoginScreen: React.FC = () => {
       setLoading(false);
     }
   };
-
   const handleFacebookLogin = async () => {
     try {
       setLoading(true);
@@ -59,16 +56,13 @@ export const LoginScreen: React.FC = () => {
       setLoading(false);
     }
   };
-
   return (
     <div className="fixed inset-0 bg-stone-950 flex flex-col items-center justify-center p-6 text-stone-100 z-50 overflow-hidden">
-      {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-900/20 blur-[100px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-900/20 blur-[100px]" />
       </div>
-
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative z-10 w-full max-w-sm bg-stone-900/80 backdrop-blur-xl border border-stone-800 rounded-3xl p-8 shadow-2xl flex flex-col items-center"
@@ -76,18 +70,15 @@ export const LoginScreen: React.FC = () => {
         <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-900/50 mb-6">
           <Trophy className="w-8 h-8 text-stone-50" />
         </div>
-        
         <h1 className="text-3xl font-black italic text-stone-50 mb-2 tracking-tight">CRICKET ROYALE</h1>
         <p className="text-stone-400 text-sm text-center mb-8 font-medium">
           Sign in to save your stats and play multiplayer matches.
         </p>
-
         {error && (
           <div className="w-full bg-red-900/50 border border-red-500/50 text-red-200 text-xs p-3 rounded-xl mb-6 text-center">
             {error}
           </div>
         )}
-
         <div className="w-full space-y-4">
           <button
             onClick={handleGoogleLogin}
@@ -102,7 +93,6 @@ export const LoginScreen: React.FC = () => {
             </svg>
             Continue with Google
           </button>
-
           <button
             onClick={handleFacebookLogin}
             disabled={loading}
