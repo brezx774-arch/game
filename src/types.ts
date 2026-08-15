@@ -78,4 +78,5 @@ export interface GameSettings {
   mode: GameMode;
   soundEnabled: boolean;
   aiDifficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  backgroundStyle?: 'STADIUM' | 'MESH' | 'ARCADE';
 }

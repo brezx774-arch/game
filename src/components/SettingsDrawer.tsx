@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, RotateCcw, Volume2, VolumeX, Trophy, Users, Bot, Sliders, LogOut } from 'lucide-react';
+import { X, RotateCcw, Volume2, VolumeX, Trophy, Users, Bot, Sliders, LogOut, Image as ImageIcon } from 'lucide-react';
 import { GameSettings } from '../types';
 import { soundFx } from '../utils/audio';
 import { auth } from '../lib/firebase';
@@ -161,6 +161,32 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   <VolumeX className="w-5 h-5 text-rose-400" />
                 )}
               </button>
+            </div>
+
+            {/* Background Style */}
+            <div>
+              <label className="block text-stone-400 font-bold uppercase tracking-wider mb-2">
+                Background Style
+              </label>
+              <div className="grid grid-cols-1 gap-2">
+                {(['STADIUM', 'MESH', 'ARCADE'] as const).map((style) => (
+                  <button
+                    key={style}
+                    onClick={() => {
+                      soundFx.playClick();
+                      onUpdateSettings({ backgroundStyle: style });
+                    }}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl border font-bold transition-all cursor-pointer ${
+                      (settings.backgroundStyle || 'STADIUM') === style
+                        ? 'bg-blue-950/80 border-blue-500 text-blue-200'
+                        : 'bg-stone-800/80 border-stone-700 text-stone-300 hover:bg-stone-800'
+                    }`}
+                  >
+                    <ImageIcon className="w-4 h-4 opacity-70" />
+                    <span className="text-[11px] uppercase tracking-wider">{style}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
