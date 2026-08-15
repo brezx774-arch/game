@@ -26,6 +26,7 @@ jobs:
             
             # --- IMPORTANT: UPDATE THIS PATH TO WHERE YOUR PROJECT IS ON THE VPS ---
             PROJECT_DIR="/var/www/game"
+            set -e
             
             cd $PROJECT_DIR
             
@@ -34,7 +35,8 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
             # Pull latest changes from GitHub
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             
             # Install dependencies and build
             npm install
