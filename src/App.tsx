@@ -87,6 +87,7 @@ export const STADIUMS: Ground[] = [
 ];
 
 export default function App() {
+  const API_URL = import.meta.env.VITE_SERVER_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
   // Self-Hosted Capacitor Updater Init
   useEffect(() => {
     const checkForUpdates = async () => {
@@ -381,7 +382,7 @@ export default function App() {
     const activeTactic = tactic || selectedTactic;
     
     try {
-      const response = await fetch('/api/roll', {
+      const response = await fetch(`${API_URL}/api/roll`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tactic: activeTactic })
@@ -418,7 +419,7 @@ export default function App() {
         let aiTactic: TacticMode = tactics[Math.floor(Math.random() * tactics.length)];
         
         try {
-          const response = await fetch('/api/roll', {
+          const response = await fetch(`${API_URL}/api/roll`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ tactic: aiTactic })
