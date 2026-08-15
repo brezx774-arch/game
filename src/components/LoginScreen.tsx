@@ -29,7 +29,7 @@ export const LoginScreen: React.FC = () => {
       setLoading(true);
       setError('');
       if (Capacitor.isNativePlatform()) {
-        const result = await FirebaseAuthentication.signInWithGoogle();
+        const result = await FirebaseAuthentication.signInWithGoogle({ useCredentialManager: false });
         const idToken = result.credential?.idToken;
         if (!idToken) throw new Error('No ID token returned from native sign-in');
         const credential = GoogleAuthProvider.credential(idToken);
