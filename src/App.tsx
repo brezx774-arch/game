@@ -892,7 +892,7 @@ export default function App() {
           playerAvatar={profile?.photoURL || user?.photoURL || ''}
         />
       ) : (
-        <div className="relative z-10 flex-1 flex flex-col justify-between w-full max-w-2xl mx-auto pb-4">
+        <div className="relative z-10 flex-1 flex flex-col w-full max-w-2xl mx-auto pb-4 h-dvh overflow-hidden">
           {/* Header */}
           <Header
             onOpenMenu={() => {
@@ -909,6 +909,7 @@ export default function App() {
             selectedGround={selectedGround}
           />
 
+          <div className="flex-1 overflow-y-auto min-h-0">
           {/* Scoreboard */}
           <MatchPlayersBanner youState={youState} aiState={aiState} emojiEvent={emojiEvent} playerLevel={playerLevel} opponentLevel={settings.mode === 'MULTIPLAYER' ? 5 : 10} />
           <Scoreboard
@@ -942,6 +943,7 @@ export default function App() {
           {/* Ball-by-Ball Overs History */}
           <OversHistory history={activePlayer.history} />
 
+          </div>
           {/* Action Controls (Defend, Rotate, Attack, ROLL) */}
           <div className="flex flex-col items-center">
             <ActionControls
