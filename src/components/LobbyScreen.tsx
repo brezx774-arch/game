@@ -312,7 +312,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         )}
       </AnimatePresence>
 
-      <div className="flex-1 overflow-y-auto w-full pb-24 min-h-0">
+      <div className="flex-1 w-full pb-16 min-h-0 flex flex-col justify-center">
       {/* Main Content Area */}
       <AnimatePresence mode="wait">
         {activeTab === 'HOME' && (
@@ -330,8 +330,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
               transition={{ type: 'spring', bounce: 0.5, duration: 0.8 }}
               className="relative flex flex-col items-center justify-center mb-3 mt-0"
             >
-              <div className="relative z-10 text-center">
-                <h1 className="text-5xl sm:text-6xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-600 drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] font-sans uppercase leading-[0.95] pt-1">
+              <div className="relative z-10 text-center mb-1">
+                <h1 className="text-4xl sm:text-5xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-600 drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)] font-sans uppercase leading-[0.95] pt-1">
                   CRICKET<br />ROYALE
                 </h1>
                 <motion.div 
@@ -448,7 +448,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    className="flex-1 w-full flex flex-col justify-end pb-4 relative z-10"
+                    className="flex-1 w-full flex flex-col justify-end pb-2 relative z-10"
                   >
                     {menuView === 'MAIN' ? (
                       <motion.div
@@ -456,19 +456,19 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
-                        className="w-full flex flex-col gap-5"
+                        className="w-full flex flex-col gap-3"
                       >
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={handlePlayClick}
-                          className="group w-full h-20 rounded-3xl bg-gradient-to-b from-[#10b981] via-[#059669] to-[#047857] border-b-[8px] border-[#064e3b] text-white flex items-center justify-center gap-4 relative overflow-hidden shadow-xl"
+                          className="group w-full h-16 rounded-3xl bg-gradient-to-b from-[#10b981] via-[#059669] to-[#047857] border-b-[6px] border-[#064e3b] text-white flex items-center justify-center gap-4 relative overflow-hidden shadow-xl"
                         >
                            <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/20 rounded-t-3xl" />
-                           <Play className="w-12 h-12 fill-white drop-shadow-lg z-10" />
+                           <Play className="w-10 h-10 fill-white drop-shadow-lg z-10" />
                            <div className="flex flex-col items-start z-10 relative">
-                             <span className="text-3xl font-black italic tracking-wider drop-shadow-md">SINGLE PLAYER</span>
-                             <span className="text-[10px] font-bold text-emerald-100 uppercase tracking-[0.2em]">VS. AI / Pass & Play</span>
+                             <span className="text-2xl font-black italic tracking-wider drop-shadow-md">SINGLE PLAYER</span>
+                             <span className="text-[9px] font-bold text-emerald-100 uppercase tracking-[0.2em]">VS. AI / Pass & Play</span>
                            </div>
                         </motion.button>
 
@@ -476,13 +476,13 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => { soundFx.playClick(); setMenuView('MULTIPLAYER'); }}
-                          className="group w-full h-20 rounded-3xl bg-gradient-to-b from-blue-500 via-blue-600 to-blue-700 border-b-[8px] border-blue-900 text-white flex items-center justify-center gap-4 relative overflow-hidden shadow-xl"
+                          className="group w-full h-16 rounded-3xl bg-gradient-to-b from-blue-500 via-blue-600 to-blue-700 border-b-[6px] border-blue-900 text-white flex items-center justify-center gap-4 relative overflow-hidden shadow-xl"
                         >
                            <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-3xl" />
-                           <Users className="w-12 h-12 fill-white drop-shadow-lg z-10" />
+                           <Users className="w-10 h-10 fill-white drop-shadow-lg z-10" />
                            <div className="flex flex-col items-start z-10 relative">
-                             <span className="text-3xl font-black italic tracking-wider drop-shadow-md">MULTIPLAYER</span>
-                             <span className="text-[10px] font-bold text-blue-200 uppercase tracking-[0.2em]">Online Matches</span>
+                             <span className="text-2xl font-black italic tracking-wider drop-shadow-md">MULTIPLAYER</span>
+                             <span className="text-[9px] font-bold text-blue-200 uppercase tracking-[0.2em]">Online Matches</span>
                            </div>
                         </motion.button>
 

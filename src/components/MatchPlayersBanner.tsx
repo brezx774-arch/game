@@ -18,7 +18,7 @@ export const MatchPlayersBanner: React.FC<MatchPlayersBannerProps> = ({ youState
       <div className="relative">
         <AnimatePresence>
           {emojiEvent?.player === 'YOU' && (
-             <motion.div key={emojiEvent.id} initial={{ opacity: 0, scale: 0.5, y: 10 }} animate={{ opacity: 1, scale: 1.5, y: -40 }} exit={{ opacity: 0 }} className="absolute -top-10 left-4 text-5xl z-50">
+             <motion.div key={emojiEvent.id} initial={{ opacity: 0, scale: 0.5, y: -10 }} animate={{ opacity: 1, scale: 1.2, y: 10 }} exit={{ opacity: 0 }} className="absolute top-full left-4 text-4xl z-50 mt-2 pointer-events-none">
                {emojiEvent.emoji}
              </motion.div>
           )}
@@ -43,7 +43,7 @@ export const MatchPlayersBanner: React.FC<MatchPlayersBannerProps> = ({ youState
       <div className="relative">
         <AnimatePresence>
           {emojiEvent?.player === 'AI' && (
-             <motion.div key={emojiEvent.id} initial={{ opacity: 0, scale: 0.5, y: 10 }} animate={{ opacity: 1, scale: 1.5, y: -40 }} exit={{ opacity: 0 }} className="absolute -top-10 right-4 text-5xl z-50">
+             <motion.div key={emojiEvent.id} initial={{ opacity: 0, scale: 0.5, y: -10 }} animate={{ opacity: 1, scale: 1.2, y: 10 }} exit={{ opacity: 0 }} className="absolute top-full right-4 text-4xl z-50 mt-2 pointer-events-none">
                {emojiEvent.emoji}
              </motion.div>
           )}

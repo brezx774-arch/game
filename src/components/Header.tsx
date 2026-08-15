@@ -27,39 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
   selectedGround,
 }) => {
   return (
-    <header className="w-full flex flex-col gap-2 px-3 py-3 relative z-20">
-      
-      {/* Top Row: Profile/Currencies */}
-      <div className="flex items-center justify-between w-full">
-        {/* Left: Player Level & XP Bar */}
-        <div className="flex items-center gap-2 bg-[#1e293b] border-2 border-[#334155] rounded-full p-1 pr-3 shadow-lg cursor-pointer active:scale-95 transition-transform">
-           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 border-2 border-white flex items-center justify-center shadow-inner relative overflow-hidden">
-             <span className="text-white font-black text-xs sm:text-sm drop-shadow-md z-10">{playerLevel}</span>
-             <Star className="absolute opacity-20 w-8 h-8 fill-white" />
-           </div>
-           <div className="flex flex-col w-20 sm:w-24">
-             <span className="text-[9px] sm:text-[10px] font-black text-white tracking-widest uppercase">PLAYER</span>
-             <div className="w-full h-1.5 sm:h-2 bg-black rounded-full overflow-hidden mt-0.5 border border-white/10">
-               <div 
-                 className="h-full bg-gradient-to-r from-green-400 to-emerald-400 rounded-full"
-                 style={{ width: `${xpProgress}%` }}
-               />
-             </div>
-           </div>
-        </div>
-
-        {/* Right: Coins/Currency */}
-        <div className="flex items-center gap-2 bg-[#1e293b] border-2 border-[#334155] rounded-full p-1 pl-3 shadow-lg cursor-pointer active:scale-95 transition-transform">
-           <div className="flex flex-col items-end mr-1">
-             <span className="text-[9px] sm:text-[10px] font-black text-[#facc15] tracking-widest uppercase leading-none">COINS</span>
-             <span className="text-sm sm:text-base font-black text-white leading-none mt-0.5">{coins.toLocaleString()}</span>
-           </div>
-           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-yellow-500 to-amber-300 border-2 border-white flex items-center justify-center shadow-inner">
-             <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-900 fill-yellow-500 drop-shadow-sm" />
-           </div>
-        </div>
-      </div>
-
+    <header className="w-full flex flex-col gap-2 px-3 py-2 relative z-20">
       {/* Bottom Row: Game Title & Controls */}
       <div className="flex items-center justify-between w-full mt-1">
         {/* Menu Button */}

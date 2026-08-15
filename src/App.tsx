@@ -913,7 +913,7 @@ export default function App() {
             selectedGround={selectedGround}
           />
 
-          <div className="flex-1 overflow-y-auto min-h-0 flex flex-col">
+          <div className="flex-1 min-h-0 flex flex-col">
           {/* Scoreboard */}
           <MatchPlayersBanner youState={youState} aiState={aiState} emojiEvent={emojiEvent} playerLevel={playerLevel} opponentLevel={settings.mode === 'MULTIPLAYER' ? 5 : 10} />
           <Scoreboard
@@ -936,18 +936,6 @@ export default function App() {
           </div>
 
           
-
-
-          {/* Commentary Event Banner */}
-          <CommentaryBanner
-            message={commentaryMsg}
-            subMessage={commentarySubMsg}
-            isPowerplay={isCurrentPowerplay}
-            isWicket={commentaryMsg.includes('OUT')}
-          />
-
-          {/* Ball-by-Ball Overs History */}
-          <OversHistory history={activePlayer.history} />
 
           </div>
           {/* Action Controls (Defend, Rotate, Attack, ROLL) */}
@@ -1001,6 +989,8 @@ export default function App() {
         onRestartMatch={handleRestartMatch}
         onExitToLobby={handleExitToLobby}
         isMultiplayer={!!multiplayerRoomId}
+        showLogout={activeScreen === 'LOBBY'}
+        showExitToLobby={activeScreen === 'GAME'}
       />
 
       {/* Match End Summary Modal */}
