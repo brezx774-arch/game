@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.sixappeal.cricket',
-  appName: 'Six Appeal Cricket',
+  appName: 'Cricket Royale',
   webDir: 'dist'
 };
 
