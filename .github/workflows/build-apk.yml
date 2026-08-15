@@ -28,6 +28,12 @@ jobs:
       - name: Add Android Platform
         run: |
           npx cap add android
+      - name: Generate App Icons
+        run: |
+          npm install -g @capacitor/assets
+          npx @capacitor/assets generate --iconBackgroundColor '#000000' --assetPath public
+      - name: Sync Android
+        run: |
           npx cap sync android
       - name: Verify Java Version
         run: |

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Settings, Trophy, User, Coins, Star, Store, Home, Medal, Activity, MapPin } from 'lucide-react';
+import { Play, Settings, Trophy, User, Coins, Star, Store, Home, Medal, Activity, MapPin, Users, ChevronLeft, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundFx } from '../utils/audio';
 import { socketService } from '../utils/socket';
 import { LeaderboardScreen } from './LeaderboardScreen';
+import { auth } from '../lib/firebase';
+import { signOut } from 'firebase/auth';
 
 import { Ground, GameMode } from '../types';
 
@@ -51,6 +53,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   playerAvatar
 }) => {
   const [activeTab, setActiveTab] = useState<'HOME' | 'PROFILE' | 'STORE'>('HOME');
+  const [menuView, setMenuView] = useState<'MAIN' | 'MULTIPLAYER'>('MAIN');
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [isSelecting, setIsSelecting] = useState(false);
   const [isMatchmaking, setIsMatchmaking] = useState(false);
@@ -198,17 +201,27 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         
         <div className="flex items-center gap-4 z-10">
            <div className="relative">
-             <div className="w-14 h-14 rounded-xl bg-gradient-to-tr from-blue-600 via-blue-500 to-cyan-400 border-[3px] border-white/90 flex items-center justify-center shadow-lg transform rotate-3">
-               <div className="absolute inset-0 bg-white/20 rounded-lg translate-y-1/2" />
-               <span className="text-white font-black text-xl drop-shadow-md z-10 -rotate-3">{playerLevel}</span>
-               <Star className="absolute opacity-30 w-10 h-10 fill-white -rotate-3" />
+             <div className="w-14 h-14 rounded-xl bg-gradient-to-tr from-blue-600 via-blue-500 to-cyan-400 border-[3px] border-white/90 flex items-center justify-center shadow-lg transform rotate-3 overflow-hidden">
+               {playerAvatar ? (
+                 <img src={playerAvatar} alt="Profile" className="w-full h-full object-cover -rotate-3" referrerPolicy="no-referrer" />
+               ) : (
+                 <>
+                   <div className="absolute inset-0 bg-white/20 rounded-lg translate-y-1/2" />
+                   <span className="text-white font-black text-xl drop-shadow-md z-10 -rotate-3">{playerLevel}</span>
+                   <Star className="absolute opacity-30 w-10 h-10 fill-white -rotate-3" />
+                 </>
+               )}
              </div>
-             <div className="absolute -bottom-2 -right-2 bg-gradient-to-br from-green-400 to-emerald-600 rounded-lg border-2 border-[#1e293b] p-1.5 shadow-md">
-               <User className="w-3.5 h-3.5 text-white drop-shadow-sm" />
+             <div className="absolute -bottom-2 -right-2 bg-gradient-to-br from-green-400 to-emerald-600 rounded-lg border-2 border-[#1e293b] p-1.5 shadow-md flex items-center justify-center min-w-[24px]">
+               {playerAvatar ? (
+                 <span className="text-[10px] font-black text-white leading-none">{playerLevel}</span>
+               ) : (
+                 <User className="w-3.5 h-3.5 text-white drop-shadow-sm" />
+               )}
              </div>
            </div>
            <div className="flex flex-col">
-             <span className="text-[11px] font-black text-stone-300 tracking-[0.2em] uppercase mb-1">Player Profile</span>
+             <span className="text-[11px] font-black text-stone-300 tracking-[0.2em] uppercase mb-1 line-clamp-1">{playerName || 'Player Profile'}</span>
              <div className="w-28 h-3 bg-black/60 rounded-full overflow-hidden border border-white/10 shadow-inner">
                <motion.div 
                  initial={{ width: 0 }}
@@ -431,58 +444,92 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                   </motion.div>
                 ) : (
                   <motion.div
-                    key="buttons"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, y: 20 }}
-                    className="w-full flex flex-col gap-5"
+                    key="home"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="flex-1 w-full flex flex-col justify-end pb-4 relative z-10"
                   >
-                    <motion.button
-                      animate={{ 
-                        boxShadow: ['0 15px 30px rgba(16,185,129,0.3)', '0 15px 40px rgba(16,185,129,0.6)', '0 15px 30px rgba(16,185,129,0.3)']
-                      }}
-                      transition={{ duration: 2.5, repeat: Infinity }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handlePlayClick}
-                      className="group w-full h-18 rounded-3xl bg-gradient-to-b from-[#10b981] via-[#059669] to-[#047857] border-b-[8px] border-[#064e3b] text-white flex items-center justify-center gap-4 relative overflow-hidden"
-                    >
-                       <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/20 rounded-t-3xl" />
-                       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-30 mix-blend-overlay" />
-                       
-                       <motion.div
-                         animate={{ x: [-2, 2, -2] }}
-                         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                       >
-                         <Play className="w-10 h-10 fill-white drop-shadow-lg z-10" />
-                       </motion.div>
-                       
-                       <div className="flex flex-col items-start z-10 relative">
-                         <span className="text-3xl font-black italic tracking-wider drop-shadow-md">PLAY NOW</span>
-                         <span className="text-xs font-bold text-emerald-100 uppercase tracking-[0.2em]">VS. AI / Pass & Play</span>
-                       </div>
-                    </motion.button>
-
-                    <div className="w-full flex flex-col gap-3 mt-4">
-                      <span className="text-[10px] font-black text-stone-400 tracking-widest uppercase ml-2 text-left">Multiplayer</span>
-                      
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                          soundFx.playClick();
-                          setIsMatchmaking(true);
-                          socketService.connect();
-                          socketService.emit('join_matchmaking');
-                        }}
-                        className="w-full h-12 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-700 border-b-[6px] border-blue-900 text-white flex items-center justify-center gap-3 relative overflow-hidden shadow-lg"
+                    {menuView === 'MAIN' ? (
+                      <motion.div
+                        key="main-menu"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        className="w-full flex flex-col gap-5"
                       >
-                         <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-2xl" />
-                         <User className="w-5 h-5 fill-white drop-shadow-md" />
-                         <span className="text-lg font-black italic tracking-widest drop-shadow-md uppercase">Find Match</span>
-                      </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={handlePlayClick}
+                          className="group w-full h-20 rounded-3xl bg-gradient-to-b from-[#10b981] via-[#059669] to-[#047857] border-b-[8px] border-[#064e3b] text-white flex items-center justify-center gap-4 relative overflow-hidden shadow-xl"
+                        >
+                           <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/20 rounded-t-3xl" />
+                           <Play className="w-12 h-12 fill-white drop-shadow-lg z-10" />
+                           <div className="flex flex-col items-start z-10 relative">
+                             <span className="text-3xl font-black italic tracking-wider drop-shadow-md">SINGLE PLAYER</span>
+                             <span className="text-[10px] font-bold text-emerald-100 uppercase tracking-[0.2em]">VS. AI / Pass & Play</span>
+                           </div>
+                        </motion.button>
 
-                      <div className="flex flex-col gap-3">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => { soundFx.playClick(); setMenuView('MULTIPLAYER'); }}
+                          className="group w-full h-20 rounded-3xl bg-gradient-to-b from-blue-500 via-blue-600 to-blue-700 border-b-[8px] border-blue-900 text-white flex items-center justify-center gap-4 relative overflow-hidden shadow-xl"
+                        >
+                           <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-3xl" />
+                           <Users className="w-12 h-12 fill-white drop-shadow-lg z-10" />
+                           <div className="flex flex-col items-start z-10 relative">
+                             <span className="text-3xl font-black italic tracking-wider drop-shadow-md">MULTIPLAYER</span>
+                             <span className="text-[10px] font-bold text-blue-200 uppercase tracking-[0.2em]">Online Matches</span>
+                           </div>
+                        </motion.button>
+
+                        <div className="grid grid-cols-2 gap-4 mt-2">
+                          <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setShowLeaderboard(true)}
+                            className="h-14 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-stone-950 hover:border-b-[4px] hover:translate-y-[2px] active:border-b-[0px] active:translate-y-[6px] text-stone-200 flex flex-col items-center justify-center gap-1 shadow-xl relative overflow-hidden transition-all cursor-pointer"
+                          >
+                             <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/5 rounded-t-2xl" />
+                             <Trophy className="w-5 h-5 text-[#facc15] drop-shadow-sm" />
+                             <span className="text-[9px] font-black tracking-widest uppercase">Leaderboard</span>
+                          </motion.button>
+
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                              soundFx.playClick();
+                              onOpenSettings();
+                            }}
+                            className="h-14 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-black text-stone-200 flex flex-col items-center justify-center gap-1 shadow-xl relative overflow-hidden group cursor-pointer"
+                          >
+                             <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/5 rounded-t-2xl group-hover:bg-white/10 transition-colors" />
+                             <Settings className="w-5 h-5 text-stone-400 group-hover:rotate-90 transition-transform duration-500" />
+                             <span className="text-[9px] font-black tracking-widest uppercase">Settings</span>
+                          </motion.button>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="multiplayer-menu"
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 50 }}
+                        className="w-full flex flex-col gap-4"
+                      >
+                        <div className="w-full flex items-center gap-3 mb-2">
+                          <button 
+                            onClick={() => { soundFx.playClick(); setMenuView('MAIN'); }} 
+                            className="p-2 bg-stone-800 rounded-xl text-stone-300 border-b-[3px] border-stone-900 active:translate-y-[2px] active:border-b-0 cursor-pointer"
+                          >
+                            <ChevronLeft className="w-6 h-6" />
+                          </button>
+                          <span className="text-xl font-black italic text-stone-100 tracking-widest uppercase">Multiplayer</span>
+                        </div>
+                        
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.95 }}
@@ -490,79 +537,71 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                             soundFx.playClick();
                             setIsMatchmaking(true);
                             socketService.connect();
-                            socketService.emit('create_room', { name: playerName, avatar: playerAvatar });
+                            socketService.emit('join_matchmaking');
                           }}
-                          className="h-12 rounded-2xl bg-gradient-to-b from-purple-500 to-purple-700 border-b-[6px] border-purple-900 text-white flex items-center justify-center gap-2 relative overflow-hidden shadow-lg w-full"
+                          className="w-full h-14 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-700 border-b-[6px] border-blue-900 text-white flex items-center justify-center gap-3 relative overflow-hidden shadow-lg cursor-pointer"
                         >
-                          <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-2xl" />
-                          <span className="text-sm font-black tracking-widest uppercase">Create Room</span>
+                           <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-2xl" />
+                           <User className="w-6 h-6 fill-white drop-shadow-md" />
+                           <span className="text-lg font-black italic tracking-widest drop-shadow-md uppercase">Find Match</span>
                         </motion.button>
-                        
-                        <div className="flex gap-2 h-12">
-                          <input 
-                            id="room-code-input"
-                            type="text" 
-                            placeholder="CODE"
-                            maxLength={4}
-                            className="flex-1 rounded-2xl bg-stone-900 border-2 border-stone-700 text-center text-white font-black tracking-widest uppercase outline-none focus:border-purple-500 transition-colors"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                const code = (e.target as HTMLInputElement).value;
-                                if (code.length === 4) {
+
+                        <div className="flex flex-col gap-3">
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                              soundFx.playClick();
+                              setIsMatchmaking(true);
+                              socketService.connect();
+                              socketService.emit('create_room', { name: playerName, avatar: playerAvatar });
+                            }}
+                            className="h-14 rounded-2xl bg-gradient-to-b from-purple-500 to-purple-700 border-b-[6px] border-purple-900 text-white flex items-center justify-center gap-2 relative overflow-hidden shadow-lg w-full cursor-pointer"
+                          >
+                            <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-2xl" />
+                            <span className="text-sm font-black tracking-widest uppercase">Create Room</span>
+                          </motion.button>
+                          
+                          <div className="flex gap-2 h-14">
+                            <input 
+                              id="room-code-input"
+                              type="text" 
+                              placeholder="CODE"
+                              maxLength={4}
+                              className="flex-1 rounded-2xl bg-stone-900 border-2 border-stone-700 text-center text-white font-black tracking-widest uppercase outline-none focus:border-purple-500 transition-colors"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  const code = (e.target as HTMLInputElement).value;
+                                  if (code.length === 4) {
+                                    soundFx.playClick();
+                                    setIsMatchmaking(true);
+                                    socketService.connect();
+                                    socketService.emit('join_room', { roomCode: code });
+                                  }
+                                }
+                              }}
+                            />
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => {
+                                const input = document.getElementById('room-code-input') as HTMLInputElement;
+                                const code = input?.value;
+                                if (code && code.length === 4) {
                                   soundFx.playClick();
                                   setIsMatchmaking(true);
                                   socketService.connect();
                                   socketService.emit('join_room', { roomCode: code });
                                 }
-                              }
-                            }}
-                          />
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => {
-                              const input = document.getElementById('room-code-input') as HTMLInputElement;
-                              const code = input?.value;
-                              if (code && code.length === 4) {
-                                soundFx.playClick();
-                                setIsMatchmaking(true);
-                                socketService.connect();
-                                socketService.emit('join_room', { roomCode: code });
-                              }
-                            }}
-                            className="h-full px-6 rounded-2xl bg-stone-800 text-stone-200 font-black text-sm uppercase tracking-wider border-b-[4px] border-stone-950 flex items-center justify-center shadow-lg"
-                          >
-                            Join
-                          </motion.button>
+                              }}
+                              className="h-full px-6 rounded-2xl bg-stone-800 text-stone-200 font-black text-sm uppercase tracking-wider border-b-[4px] border-stone-950 flex items-center justify-center shadow-lg cursor-pointer"
+                            >
+                              Join
+                            </motion.button>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setShowLeaderboard(true)}
-                        className="h-14 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-stone-950 hover:border-b-[4px] hover:translate-y-[2px] active:border-b-[0px] active:translate-y-[6px] text-stone-200 flex flex-col items-center justify-center gap-1 shadow-xl relative overflow-hidden transition-all"
-                      >
-                         <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/5 rounded-t-2xl" />
-                         <Trophy className="w-5 h-5 text-[#facc15] drop-shadow-sm" />
-                         <span className="text-[9px] font-black tracking-widest uppercase">Leaderboard</span>
-                      </motion.button>
-
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                          soundFx.playClick();
-                          onOpenSettings();
-                        }}
-                        className="h-14 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-900 border-b-[6px] border-black text-stone-200 flex flex-col items-center justify-center gap-1 shadow-xl relative overflow-hidden group"
-                      >
-                         <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/5 rounded-t-2xl group-hover:bg-white/10 transition-colors" />
-                         <Settings className="w-5 h-5 text-stone-400 group-hover:rotate-90 transition-transform duration-500" />
-                         <span className="text-[9px] font-black tracking-widest uppercase">Settings</span>
-                      </motion.button>
-                    </div>
+                      </motion.div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -623,6 +662,13 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                 <span className="text-xs text-amber-400/70 font-semibold">Reach Level 5 to unlock next title</span>
               </div>
             </div>
+            
+            <button
+              onClick={() => { soundFx.playClick(); signOut(auth); }}
+              className="mt-6 w-full h-12 rounded-xl bg-transparent border-2 border-stone-800 text-stone-400 font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-stone-800 hover:text-stone-200 transition-colors cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" /> Sign Out
+            </button>
           </motion.div>
         )}
 
