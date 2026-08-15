@@ -797,7 +797,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-dvh bg-stone-950 text-stone-100 font-sans flex flex-col justify-between selection:bg-amber-500 selection:text-stone-950 relative overflow-x-hidden">
+    <div className="h-dvh bg-stone-950 text-stone-100 font-sans flex flex-col justify-between overflow-hidden selection:bg-amber-500 selection:text-stone-950 relative overflow-x-hidden">
       {/* Background Stadium Glow & Vignette */}
       <div className={`fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] ${activeScreen === 'GAME' ? selectedGround.gradientClass : 'from-amber-950/20 via-stone-950 to-black'} pointer-events-none transition-colors duration-1000`} />
 
