@@ -3,6 +3,7 @@ import express from 'express';
 import { createServer as createHttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import path from 'path';
+import cors from 'cors';
 import { createServer as createViteServer } from 'vite';
 
 const PORT = 3000;
@@ -17,6 +18,7 @@ async function startServer() {
     },
   });
 
+  app.use(cors());
   app.use(express.json());
 
   // Self-Hosted OTA Update Endpoint
