@@ -31,7 +31,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
   return (
     <div
       id="controls-play-bar"
-      className="w-full max-w-xl mx-auto px-2 my-2 relative z-20 pb-4"
+      className="w-full max-w-xl mx-auto px-2 my-1 relative z-20 pb-2"
     >
       <div className="flex gap-2 items-end justify-center">
         
