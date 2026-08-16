@@ -42,8 +42,8 @@ jobs:
           
       - name: Configure Firebase and Google Sign-In
         env:
-          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
-          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
+          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
         run: |
           # 1. Enable Google Sign-In in variables.gradle
           grep -q "rgcfaIncludeGoogle" android/variables.gradle || echo "ext.rgcfaIncludeGoogle = true" >> android/variables.gradle
