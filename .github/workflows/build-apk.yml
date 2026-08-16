@@ -35,19 +35,30 @@ jobs:
       - name: Sync Android
         run: |
           npx cap sync android
-      - name: Inject google-services.json and Keystore
+          
+      - name: Configure Firebase and Google Sign-In
         env:
           GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
           DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
         run: |
-          # Create android directory if it doesn't exist
-          mkdir -p android/app
+          # 1. Enable Google Sign-In in variables.gradle
+          echo "ext.rgcfaIncludeGoogle = true" >> android/variables.gradle
+          echo "ext.rgcfaIncludeFacebook = true" >> android/variables.gradle
           
-          # Decode google-services.json
+          # 2. Inject google-services.json
+          mkdir -p android/app
+          if [ -z "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "::error::GOOGLE_SERVICES_JSON_BASE64 secret is empty or missing!"
+            exit 1
+          fi
           echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > android/app/google-services.json
           
-          # Decode and place the keystore
+          # 3. Inject Keystore
           mkdir -p ~/.android
+          if [ -z "$DEBUG_KEYSTORE_BASE64" ]; then
+            echo "::error::DEBUG_KEYSTORE_BASE64 secret is empty or missing!"
+            exit 1
+          fi
           echo "$DEBUG_KEYSTORE_BASE64" | base64 --decode > ~/.android/debug.keystore
       - name: Verify Java Version
         run: |
