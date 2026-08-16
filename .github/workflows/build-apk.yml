@@ -45,6 +45,12 @@ jobs:
           npx @capacitor/assets generate --iconBackgroundColor '#000000' --assetPath public
       - name: Sync Android
         run: npx cap sync android
+      - name: Debug - Check Web Client ID
+        working-directory: ./android
+        run: |
+          ./gradlew :app:processDebugGoogleServices
+          echo "=== default_web_client_id ==="
+          grep -R "default_web_client_id" app/build/generated/ -A2 || echo "NOT FOUND"
       - name: Verify Java Version
         run: |
           java -version
