@@ -37,8 +37,7 @@ jobs:
          echo "apply plugin: 'com.google.gms.google-services'" >> android/app/build.gradle
       - name: Inject Web Client ID
         run: |
-          sed -i '/<\/resources>/i \    <string name="server_client_id">280292822833-ienr0nnltfnh6tmjuki91u0ir8ir25lf.apps.googleusercontent.com</string>' android/app/src/main/res/values/strings.xml
-      - name: Install Stable Debug Keystore
+          sed -i '/custom_url_scheme/a \    <string name="server_client_id">280292822833-ienr0nnltfnh6tmjuki91u0ir8ir25lf.apps.googleusercontent.com</string>' android/app/src/main/res/values/strings.xml
         run: |
           mkdir -p ~/.android
           echo "${{ secrets.DEBUG_KEYSTORE_B64 }}" | tr -d '\n' | base64 -d > ~/.android/debug.keystore
