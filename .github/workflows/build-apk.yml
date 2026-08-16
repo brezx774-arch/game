@@ -56,7 +56,14 @@ jobs:
             echo "::error::GOOGLE_SERVICES_JSON_BASE64 secret is empty or missing!"
             exit 1
           fi
+          # Ensure strict decoding (ignore garbage but don't silently fail if heavily corrupted)
           echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > android/app/google-services.json
+          
+          echo "Verifying google-services.json..."
+          if ! grep -q '"client_type": 3' android/app/google-services.json; then
+             echo "::error::CRITICAL: Your google-services.json is missing the Web Client ID (client_type: 3). You MUST go to Firebase Console > Project Settings > General, download a fresh google-services.json, convert it to Base64, and update your GitHub Secret. Google Sign-In will NOT work without this!"
+             exit 1
+          fi
           
           # 3. Inject Keystore
           mkdir -p ~/.android
@@ -65,6 +72,12 @@ jobs:
             exit 1
           fi
           echo "$DEBUG_KEYSTORE_BASE64" | base64 --decode > ~/.android/debug.keystore
+          
+          echo "Verifying debug.keystore validity..."
+          if ! keytool -list -keystore ~/.android/debug.keystore -storepass android > /dev/null; then
+             echo "::error::CRITICAL: Your debug.keystore is corrupted! The Base64 string in GitHub Secrets is invalid. Please regenerate the base64 string from your VPS and update the Secret."
+             exit 1
+          fi
       - name: Verify Java Version
         run: |
           java -version

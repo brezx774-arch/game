@@ -1,0 +1,22 @@
+{
+  "project_info": {},
+  "client": [
+    {
+      "client_info": {},
+      "oauth_client": [
+        {
+          "client_id": "123-abc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.app",
+            "certificate_hash": "abc"
+          }
+        },
+        {
+          "client_id": "123-def.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ]
+    }
+  ]
+}
