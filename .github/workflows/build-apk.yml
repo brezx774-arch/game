@@ -26,6 +26,15 @@ jobs:
         run: npm install @capacitor/cli @capacitor/core @capacitor/android
       - name: Add Android Platform
         run: npx cap add android
+      - name: Enable Google Sign-In native dependency
+        run: |
+          cat >> android/build.gradle << 'EOF'
+
+          ext {
+              rgcfaIncludeGoogle = true
+              androidxCredentialsVersion = '1.3.0'
+          }
+          EOF
       - name: Add google-services.json
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON_B64 }}" | tr -d '\n' | base64 -d > android/app/google-services.json
       - name: Add Google Services Gradle Plugin
