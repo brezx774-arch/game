@@ -34,7 +34,10 @@ jobs:
       - name: Add Google Services Gradle Plugin
         run: |
           sed -i '/dependencies {/a\        classpath "com.google.gms:google-services:4.4.2"' android/build.gradle
-          echo "apply plugin: 'com.google.gms.google-services'" >> android/app/build.gradle
+         echo "apply plugin: 'com.google.gms.google-services'" >> android/app/build.gradle
+      - name: Inject Web Client ID
+        run: |
+          sed -i '/<\/resources>/i \    <string name="server_client_id">280292822833-ienr0nnltfnh6tmjuki91u0ir8ir25lf.apps.googleusercontent.com</string>' android/app/src/main/res/values/strings.xml
       - name: Install Stable Debug Keystore
         run: |
           mkdir -p ~/.android
