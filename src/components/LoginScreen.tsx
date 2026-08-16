@@ -38,7 +38,7 @@ export const LoginScreen: React.FC = () => {
       setLoading(true);
       setError('');
       if (Capacitor.isNativePlatform()) {
-         const result = await FirebaseAuthentication.signInWithGoogle();
+         const result = await FirebaseAuthentication.signInWithGoogle({ useCredentialManager: false });
          if (result.credential?.idToken) {
            const credential = GoogleAuthProvider.credential(result.credential.idToken);
            await signInWithCredential(auth, credential);
