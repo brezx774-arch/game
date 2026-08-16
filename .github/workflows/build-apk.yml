@@ -46,6 +46,7 @@ jobs:
           DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
         run: |
           # 1. Enable Google Sign-In in variables.gradle
+          echo "" >> android/variables.gradle
           grep -q "rgcfaIncludeGoogle" android/variables.gradle || echo "ext.rgcfaIncludeGoogle = true" >> android/variables.gradle
           grep -q "rgcfaIncludeFacebook" android/variables.gradle || echo "ext.rgcfaIncludeFacebook = true" >> android/variables.gradle
           
