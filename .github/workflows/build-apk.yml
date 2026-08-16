@@ -72,7 +72,9 @@ jobs:
       - name: Build APK with Gradle
         working-directory: ./android
         run: |
-          gradle wrapper --gradle-version 8.14.3
+          # Create a dummy folder to generate the wrapper jar without triggering Android project configuration
+          mkdir -p ../temp-wrapper
+          (cd ../temp-wrapper && gradle wrapper --gradle-version 8.14.3 && cp gradle/wrapper/gradle-wrapper.jar ../android/gradle/wrapper/gradle-wrapper.jar)
           chmod +x gradlew
           ./gradlew assembleDebug
       - name: Upload APK Artifact
