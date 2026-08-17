@@ -5,6 +5,7 @@ import { Trophy } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Capacitor } from '@capacitor/core';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
+import { AnimatedBackground } from './AnimatedBackground';
 
 export const LoginScreen: React.FC = () => {
   const [error, setError] = useState<string>('');
@@ -73,11 +74,8 @@ export const LoginScreen: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-stone-950 flex flex-col items-center justify-center p-6 text-stone-100 z-50 overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-900/20 blur-[100px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-900/20 blur-[100px]" />
-      </div>
+      {/* Background layer */}
+      <AnimatedBackground variant="STADIUM" inGame={false} />
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
