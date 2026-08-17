@@ -73,11 +73,19 @@ jobs:
           fi
           echo "$DEBUG_KEYSTORE_BASE64" | base64 --decode > ~/.android/debug.keystore
           
-          echo "Verifying debug.keystore validity..."
+          echo "Verifying debug.keystore validity and extracting Fingerprints..."
           if ! keytool -list -keystore ~/.android/debug.keystore -storepass android > /dev/null; then
              echo "::error::CRITICAL: Your debug.keystore is corrupted! The Base64 string in GitHub Secrets is invalid. Please regenerate the base64 string from your VPS and update the Secret."
              exit 1
           fi
+          
+          echo "========================================================"
+          echo "🔑 GITHUB ACTIONS KEYSTORE FINGERPRINTS 🔑"
+          echo "If Google Sign-In gives Error 10, add these exact"
+          echo "fingerprints to your Firebase Android App settings!"
+          echo "========================================================"
+          keytool -list -v -keystore ~/.android/debug.keystore -storepass android | grep -E "SHA1:|SHA256:"
+          echo "========================================================"
       - name: Verify Java Version
         run: |
           java -version
