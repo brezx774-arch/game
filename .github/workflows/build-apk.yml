@@ -61,9 +61,14 @@ jobs:
           
           echo "Verifying google-services.json..."
           if ! grep -q '"client_type": 3' android/app/google-services.json; then
-             echo "::error::CRITICAL: Your google-services.json is missing the Web Client ID (client_type: 3). You MUST go to Firebase Console > Project Settings > General, download a fresh google-services.json, convert it to Base64, and update your GitHub Secret. Google Sign-In will NOT work without this!"
+             echo "::error::CRITICAL: Your google-services.json is missing the Web Client ID (client_type: 3)."
              exit 1
           fi
+          echo "========================================================"
+          echo "🔍 FIREBASE PROJECT CHECK 🔍"
+          echo "Ensure this Project ID matches the one you are editing in Firebase!"
+          grep '"project_id"' android/app/google-services.json | head -n 1
+          echo "========================================================"
           
           # 3. Inject Keystore
           mkdir -p ~/.android
