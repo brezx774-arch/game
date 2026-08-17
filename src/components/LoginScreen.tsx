@@ -83,7 +83,7 @@ export const LoginScreen: React.FC = () => {
         className="relative z-10 w-full max-w-sm bg-stone-900/80 backdrop-blur-xl border border-stone-800 rounded-3xl p-8 shadow-2xl flex flex-col items-center"
       >
         <div className="w-24 h-24 bg-stone-800 rounded-3xl flex items-center justify-center shadow-lg shadow-emerald-900/20 mb-6 overflow-hidden border border-stone-700">
-          <img src="/icon.png" alt="Cricket Royale Logo" className="w-full h-full object-cover" />
+          <img src="/icon.jpg" alt="Cricket Royale Logo" className="w-full h-full object-cover" />
         </div>
         
         <h1 className="text-3xl font-black italic text-stone-50 mb-2 tracking-tight">CRICKET ROYALE</h1>
