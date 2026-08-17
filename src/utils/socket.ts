@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 
 // Replace with your actual server URL in production if different
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://amongush.duckdns.org';
 
 class SocketService {
   public socket: Socket | null = null;

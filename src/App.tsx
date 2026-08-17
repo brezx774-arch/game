@@ -87,7 +87,7 @@ export const STADIUMS: Ground[] = [
 ];
 
 export default function App() {
-  const API_URL = import.meta.env.VITE_SERVER_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+  const API_URL = import.meta.env.VITE_SERVER_URL || 'https://amongush.duckdns.org';
   // Self-Hosted Capacitor Updater Init
   useEffect(() => {
     const checkForUpdates = async () => {
@@ -96,7 +96,7 @@ export default function App() {
         await CapacitorUpdater.notifyAppReady();
         
         // Check our VPS for updates
-        const SERVER_URL = import.meta.env.VITE_SERVER_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+        const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://amongush.duckdns.org';
         const response = await fetch(`${SERVER_URL}/api/check-update`);
         const data = await response.json();
         
