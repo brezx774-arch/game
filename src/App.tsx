@@ -27,10 +27,10 @@ import { DiceModal } from './components/DiceModal';
 import { RulesModal } from './components/RulesModal';
 import { SettingsDrawer } from './components/SettingsDrawer';
 import { MatchEndModal } from './components/MatchEndModal';
-import { LobbyScreen } from './components/LobbyScreen';
-import { TossScreen } from './components/TossScreen';
+import { LobbyScreen } from './screens/LobbyScreen';
+import { TossScreen } from './screens/TossScreen';
 import { MatchPlayersBanner } from './components/MatchPlayersBanner';
-import { LoginScreen } from './components/LoginScreen';
+import { LoginScreen } from './screens/LoginScreen';
 import { AnimatedBackground } from './components/AnimatedBackground';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from './lib/firebase';
@@ -88,35 +88,10 @@ export const STADIUMS: Ground[] = [
 
 export default function App() {
   const API_URL = import.meta.env.VITE_SERVER_URL || 'https://amongush.duckdns.org';
+  
   // Self-Hosted Capacitor Updater Init
   useEffect(() => {
-    const checkForUpdates = async () => {
-      if (!Capacitor.isNativePlatform()) return;
-      try {
-        await CapacitorUpdater.notifyAppReady();
-        
-        // Check our VPS for updates
-        const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://amongush.duckdns.org';
-        const response = await fetch(`${SERVER_URL}/api/check-update`);
-        const data = await response.json();
-        
-        const currentVersion = localStorage.getItem('app_version') || '1.0.0';
-        
-        if (data.url && data.version !== currentVersion) {
-          console.log('Downloading new update:', data.version);
-          const version = await CapacitorUpdater.download({
-            url: data.url,
-            version: data.version,
-          });
-          localStorage.setItem('app_version', data.version);
-          await CapacitorUpdater.set(version);
-          await CapacitorUpdater.reload();
-        }
-      } catch (err) {
-        console.error('Update check failed:', err);
-      }
-    };
-    checkForUpdates();
+    import('./services/otaService').then(m => m.checkForUpdates());
   }, []);
 
   // Auth State

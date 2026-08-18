@@ -60,7 +60,7 @@ export const CricketBoard: React.FC<CricketBoardProps> = ({
             left: { type: 'spring', stiffness: 200, damping: 22 },
             top: { type: 'spring', stiffness: 200, damping: 22 },
           }}
-          className="absolute z-40 pointer-events-none drop-shadow-2xl flex flex-col items-center"
+          className="absolute z-40 pointer-events-none  flex flex-col items-center"
         >
           {/* Dynamic Shadow underneath player */}
           <motion.div 
@@ -144,7 +144,7 @@ export const CricketBoard: React.FC<CricketBoardProps> = ({
   };
 
   return (
-    <div className={`relative h-full max-h-[420px] aspect-square mx-auto ${ground?.grassColorClass || 'bg-emerald-800'} rounded-[3rem] shadow-2xl overflow-hidden`}>
+    <div className={`relative h-full max-h-[420px] aspect-square mx-auto ${ground?.grassColorClass || 'bg-emerald-800'} rounded-[3rem] shadow-md overflow-hidden`}>
       {/* Grass pattern overlay */}
       <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{
         backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.2) 10px, rgba(0,0,0,0.2) 20px)'
@@ -152,7 +152,7 @@ export const CricketBoard: React.FC<CricketBoardProps> = ({
       {/* 30-yard circle */}
       <div className="absolute inset-[15%] rounded-[50%] border-2 border-white/20 pointer-events-none" />
       {/* Stadium Pitch Base */}
-      <div className={`absolute top-[25%] bottom-[25%] left-[38%] right-[38%] rounded-sm ${ground?.pitchColorClass || 'bg-[#e5d3b3]'} border-2 ${ground?.grassColorClass ? 'border-transparent' : 'border-emerald-800/40'} shadow-2xl`} style={{
+      <div className={`absolute top-[25%] bottom-[25%] left-[38%] right-[38%] rounded-sm ${ground?.pitchColorClass || 'bg-[#e5d3b3]'} border-2 ${ground?.grassColorClass ? 'border-transparent' : 'border-emerald-800/40'} shadow-md`} style={{
         backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(0,0,0,0.03) 20px, rgba(0,0,0,0.03) 40px)`
       }} />
       

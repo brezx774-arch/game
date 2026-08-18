@@ -87,7 +87,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
               }}
               className={`flex-1 relative flex flex-col items-center justify-center p-2 rounded-xl border-b-4 transition-all overflow-hidden ${
                 selectedTactic === "DEFEND"
-                  ? "bg-gradient-to-b from-[#3b82f6] to-[#2563eb] border-[#1e40af] text-white shadow-[0_0_20px_rgba(59,130,246,0.6)]"
+                  ? "bg-gradient-to-b from-[#3b82f6] to-[#2563eb] border-[#1e40af] text-white shadow-md"
                   : "bg-[#1e293b] border-[#0f172a] text-[#94a3b8] hover:bg-[#334155]"
               } ${disabled || isRolling ? "opacity-50 grayscale" : ""}`}
             >
@@ -104,7 +104,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
               }}
               className={`flex-1 relative flex flex-col items-center justify-center p-2 rounded-xl border-b-4 transition-all overflow-hidden ${
                 selectedTactic === "ROTATE"
-                  ? "bg-gradient-to-b from-[#10b981] to-[#059669] border-[#064e3b] text-white shadow-[0_0_20px_rgba(16,185,129,0.6)]"
+                  ? "bg-gradient-to-b from-[#10b981] to-[#059669] border-[#064e3b] text-white shadow-md"
                   : "bg-[#1e293b] border-[#0f172a] text-[#94a3b8] hover:bg-[#334155]"
               } ${disabled || isRolling ? "opacity-50 grayscale" : ""}`}
             >
@@ -121,7 +121,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
               }}
               className={`flex-1 relative flex flex-col items-center justify-center p-2 rounded-xl border-b-4 transition-all overflow-hidden ${
                 selectedTactic === "ATTACK"
-                  ? "bg-gradient-to-b from-[#f59e0b] to-[#d97706] border-[#92400e] text-white shadow-[0_0_20px_rgba(245,158,11,0.6)]"
+                  ? "bg-gradient-to-b from-[#f59e0b] to-[#d97706] border-[#92400e] text-white shadow-md"
                   : "bg-[#1e293b] border-[#0f172a] text-[#94a3b8] hover:bg-[#334155]"
               } ${disabled || isRolling ? "opacity-50 grayscale" : ""}`}
             >
@@ -141,7 +141,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
               }}
               className={`flex-1 relative flex flex-col items-center justify-center p-2 rounded-xl border-b-4 transition-all overflow-hidden ${
                 selectedTactic === "FAST"
-                  ? "bg-gradient-to-b from-[#ef4444] to-[#b91c1c] border-[#7f1d1d] text-white shadow-[0_0_20px_rgba(239,68,68,0.6)]"
+                  ? "bg-gradient-to-b from-[#ef4444] to-[#b91c1c] border-[#7f1d1d] text-white shadow-md"
                   : "bg-[#1e293b] border-[#0f172a] text-[#94a3b8] hover:bg-[#334155]"
               } ${disabled || isRolling ? "opacity-50 grayscale" : ""}`}
             >
@@ -158,7 +158,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
               }}
               className={`flex-1 relative flex flex-col items-center justify-center p-2 rounded-xl border-b-4 transition-all overflow-hidden ${
                 selectedTactic === "SPIN"
-                  ? "bg-gradient-to-b from-[#8b5cf6] to-[#6d28d9] border-[#4c1d95] text-white shadow-[0_0_20px_rgba(139,92,246,0.6)]"
+                  ? "bg-gradient-to-b from-[#8b5cf6] to-[#6d28d9] border-[#4c1d95] text-white shadow-md"
                   : "bg-[#1e293b] border-[#0f172a] text-[#94a3b8] hover:bg-[#334155]"
               } ${disabled || isRolling ? "opacity-50 grayscale" : ""}`}
             >
@@ -175,7 +175,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
               }}
               className={`flex-1 relative flex flex-col items-center justify-center p-2 rounded-xl border-b-4 transition-all overflow-hidden ${
                 selectedTactic === "YORKER"
-                  ? "bg-gradient-to-b from-[#14b8a6] to-[#0f766e] border-[#134e4a] text-white shadow-[0_0_20px_rgba(20,184,166,0.6)]"
+                  ? "bg-gradient-to-b from-[#14b8a6] to-[#0f766e] border-[#134e4a] text-white shadow-md"
                   : "bg-[#1e293b] border-[#0f172a] text-[#94a3b8] hover:bg-[#334155]"
               } ${disabled || isRolling ? "opacity-50 grayscale" : ""}`}
             >
@@ -201,7 +201,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
             className={`w-full relative h-[72px] flex items-center justify-center rounded-2xl border-b-[8px] transition-all overflow-hidden ${
               isRolling || disabled
                 ? "bg-[#475569] border-[#1e293b] text-[#94a3b8] cursor-not-allowed"
-                : "bg-[#ef4444] border-[#991b1b] text-white hover:brightness-110 shadow-[0_10px_20px_rgba(239,68,68,0.4)]"
+                : "bg-[#ef4444] border-[#991b1b] text-white hover:brightness-110 shadow-lg"
             }`}
           >
             {/* Glossy shine */}

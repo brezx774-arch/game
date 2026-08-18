@@ -11,7 +11,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80  overflow-y-auto">
       <div className="bg-stone-900 border border-stone-700 text-stone-100 rounded-3xl max-w-lg w-full p-5 shadow-2xl relative my-8">
         {/* Close button */}
         <button

@@ -1,0 +1,11 @@
+I just pushed an update that completely removes the heaviest visual effects from the game! 
+
+Here is exactly what I changed:
+- Removed the massive glowing box-shadows behind the Action Buttons (Roll/Tactic buttons) that were straining the phone's GPU.
+- Removed the heavy `backdrop-blur` (glassmorphism) effects from all modals, player banners, and headers.
+- Converted all the deep shadows on the Cricket Board to simple, flat CSS shadows.
+
+**How to test it:**
+The OTA update is deploying to your phone right now. Open the app, and once the update applies, let me know if the framerate feels smooth and buttery again!
+
+*While you test that, I've already set up the `src/screens/` directory and extracted `LoginScreen`, `LobbyScreen`, and `TossScreen` out of the main logic to kick off Phase 2 behind the scenes!*

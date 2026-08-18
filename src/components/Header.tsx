@@ -52,7 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
                 CRICKET ROYALE
               </h1>
               {selectedGround ? (
-                <div className="flex items-center gap-1 justify-center bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-sm shadow-md mt-[-4px] border border-white/10">
+                <div className="flex items-center gap-1 justify-center bg-black/40  px-2 py-0.5 rounded-sm shadow-md mt-[-4px] border border-white/10">
                   <MapPin className="w-2.5 h-2.5 text-amber-400" />
                   <span className="text-[8px] sm:text-[9px] font-black tracking-widest text-amber-100 uppercase">
                     {selectedGround.name}, {selectedGround.location}

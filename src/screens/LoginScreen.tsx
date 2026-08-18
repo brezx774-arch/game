@@ -5,7 +5,7 @@ import { Trophy } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Capacitor } from '@capacitor/core';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
-import { AnimatedBackground } from './AnimatedBackground';
+import { AnimatedBackground } from '../components/AnimatedBackground';
 
 export const LoginScreen: React.FC = () => {
   const [error, setError] = useState<string>('');

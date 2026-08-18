@@ -57,7 +57,7 @@ export const MatchEndModal: React.FC<MatchEndModalProps> = ({
   const isYouMvp = mvp.id === youState.id;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 ">
       <div className="bg-stone-900 border-2 border-amber-500/80 rounded-3xl max-w-md w-full p-6 text-stone-100 shadow-[0_0_50px_rgba(245,158,11,0.5)] text-center relative overflow-hidden">
         {/* MVP Background Glow */}
         <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 blur-3xl opacity-20 pointer-events-none ${isYouMvp ? 'bg-emerald-500' : 'bg-rose-500'}`} />

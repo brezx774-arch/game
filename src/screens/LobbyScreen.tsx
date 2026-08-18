@@ -3,7 +3,7 @@ import { Play, Settings, Trophy, User, Coins, Star, Store, Home, Medal, Activity
 import { motion, AnimatePresence } from 'motion/react';
 import { soundFx } from '../utils/audio';
 import { socketService } from '../utils/socket';
-import { LeaderboardScreen } from './LeaderboardScreen';
+import { LeaderboardScreen } from '../components/LeaderboardScreen';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 

@@ -31,7 +31,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-start bg-black/70 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex justify-start bg-black/70 ">
       <div className="w-full max-w-xs h-full bg-stone-900 border-r border-stone-800 p-5 text-stone-100 flex flex-col justify-between shadow-2xl overflow-y-auto">
         <div>
           {/* Header */}

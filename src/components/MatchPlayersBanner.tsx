@@ -23,7 +23,7 @@ export const MatchPlayersBanner: React.FC<MatchPlayersBannerProps> = ({ youState
              </motion.div>
           )}
         </AnimatePresence>
-        <div className="flex items-center gap-2 bg-stone-900/80 border-2 border-stone-700 p-1.5 pr-4 rounded-full shadow-lg backdrop-blur-sm">
+        <div className="flex items-center gap-2 bg-stone-900/80 border-2 border-stone-700 p-1.5 pr-4 rounded-full shadow-lg ">
            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center border-2 border-white shadow-inner">
              {youState.avatar === 'robot' ? <Bot className="text-white w-5 h-5" /> : <User className="text-white w-5 h-5" />}
            </div>
@@ -48,7 +48,7 @@ export const MatchPlayersBanner: React.FC<MatchPlayersBannerProps> = ({ youState
              </motion.div>
           )}
         </AnimatePresence>
-        <div className="flex items-center gap-2 bg-stone-900/80 border-2 border-stone-700 p-1.5 pl-4 rounded-full shadow-lg backdrop-blur-sm flex-row-reverse">
+        <div className="flex items-center gap-2 bg-stone-900/80 border-2 border-stone-700 p-1.5 pl-4 rounded-full shadow-lg  flex-row-reverse">
            <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center border-2 border-white shadow-inner">
              {aiState.avatar === 'robot' ? <Bot className="text-white w-5 h-5" /> : <User className="text-white w-5 h-5" />}
            </div>
