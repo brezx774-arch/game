@@ -1,4 +1,7 @@
-import { Capacitor } from '@capacitor/core';
+const fs = require('fs');
+let code = fs.readFileSync('src/services/otaService.ts', 'utf8');
+
+const newCode = `import { Capacitor } from '@capacitor/core';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 
 export const checkForUpdates = async () => {
@@ -8,7 +11,7 @@ export const checkForUpdates = async () => {
     await CapacitorUpdater.notifyAppReady();
     
     const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://amongush.duckdns.org';
-    const response = await fetch(`${SERVER_URL}/api/check-update`);
+    const response = await fetch(\`\${SERVER_URL}/api/check-update\`);
     const data = await response.json();
     
     // Use the Vite injected version from the build, NOT localStorage!
@@ -35,4 +38,7 @@ export const checkForUpdates = async () => {
   } catch (error) {
     console.error('OTA Update check failed:', error);
   }
-};
+};`;
+
+fs.writeFileSync('src/services/otaService.ts', newCode);
+console.log('Fully replaced otaService.ts');

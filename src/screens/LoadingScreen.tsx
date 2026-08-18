@@ -36,9 +36,10 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ authLoading, profi
   return (
     <div className="fixed inset-0 bg-stone-950 flex flex-col items-center justify-end z-[200] overflow-hidden text-stone-100">
       {/* Background Image Container */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/loading_bg.jpg)' }}
+      <img 
+        src="/loading_bg.jpg"
+        alt="Loading Background"
+        className="absolute inset-0 w-full h-full object-cover"
       />
       
       {/* Dark gradient overlay for text readability at the bottom */}
