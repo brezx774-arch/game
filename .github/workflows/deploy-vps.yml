@@ -36,13 +36,24 @@ jobs:
             # Pull latest changes from GitHub
             git pull origin main
             
+            ZIP_NAME="update_${SHORT_SHA}.zip"
+            
+            # Update .env file BEFORE building so Vite can bake it into the frontend
+            sed -i '/^APP_VERSION=/d' .env
+            sed -i '/^APP_UPDATE_URL=/d' .env
+            sed -i '/^VITE_APP_VERSION=/d' .env
+            
+            # Append new variables
+            echo "APP_VERSION=${SHORT_SHA}" >> .env
+            echo "APP_UPDATE_URL=https://amongush.duckdns.org/updates/${ZIP_NAME}" >> .env
+            echo "VITE_APP_VERSION=${SHORT_SHA}" >> .env
+            
             # Install dependencies and build
             npm install
             npm run build
             
             # Zip the dist/ output (frontend assets only)
             cd dist
-            ZIP_NAME="update_${SHORT_SHA}.zip"
             # Exclude server backend files during zip to keep OTA lightweight, without deleting them from disk!
             zip -r $ZIP_NAME * -x "server.cjs" -x "server.cjs.map" -x "app-debug.apk"
             
@@ -52,15 +63,6 @@ jobs:
             
             # Go back to project root
             cd ..
-            
-            # Update .env file
-            # Remove existing APP_VERSION and APP_UPDATE_URL lines if they exist
-            sed -i '/^APP_VERSION=/d' .env
-            sed -i '/^APP_UPDATE_URL=/d' .env
-            
-            # Append new variables
-            echo "APP_VERSION=${SHORT_SHA}" >> .env
-            echo "APP_UPDATE_URL=https://amongush.duckdns.org/updates/${ZIP_NAME}" >> .env
             
             # Restart the PM2 process
             /root/.nvm/versions/node/v24.18.1/bin/pm2 restart cricket-server --update-env
