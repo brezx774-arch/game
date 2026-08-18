@@ -15,13 +15,20 @@ export const checkForUpdates = async () => {
     
     if (data.url && data.version !== currentVersion) {
       console.log('Downloading new update:', data.version);
-      const version = await CapacitorUpdater.download({
-        url: data.url,
-        version: data.version,
-      });
-      localStorage.setItem('app_version', data.version);
-      await CapacitorUpdater.set(version);
-      await CapacitorUpdater.reload();
+      try {
+        const version = await CapacitorUpdater.download({
+          url: data.url,
+          version: data.version,
+        });
+        
+        await CapacitorUpdater.set(version);
+        // Only save to localStorage AFTER set succeeds to prevent fake-success bug
+        localStorage.setItem('app_version', data.version);
+        await CapacitorUpdater.reload();
+      } catch (err) {
+        console.error('Failed to apply update, clearing version:', err);
+        localStorage.removeItem('app_version'); // Reset so it tries again next time
+      }
     }
   } catch (error) {
     console.error('OTA Update check failed:', error);
