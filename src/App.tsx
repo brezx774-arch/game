@@ -97,7 +97,9 @@ export default function App() {
   
   // Self-Hosted Capacitor Updater Init
   useEffect(() => {
-    import('./services/otaService').then(m => m.checkForUpdates());
+    import('./services/otaService')
+      .then(m => m.checkForUpdates().catch(e => console.warn('OTA init skipped', e)))
+      .catch(e => console.warn('OTA Service load skipped', e));
   }, []);
 
   // Auth State

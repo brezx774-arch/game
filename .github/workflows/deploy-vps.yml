@@ -43,9 +43,8 @@ jobs:
             # Zip the dist/ output (frontend assets only)
             cd dist
             ZIP_NAME="update_${SHORT_SHA}.zip"
-            # Remove server backend files before zipping to keep OTA lightweight
-            rm -f server.cjs server.cjs.map app-debug.apk
-            zip -r $ZIP_NAME *
+            # Exclude server backend files during zip to keep OTA lightweight, without deleting them from disk!
+            zip -r $ZIP_NAME * -x "server.cjs" -x "server.cjs.map" -x "app-debug.apk"
             
             # Copy to Nginx updates directory (added sudo in case of permissions, but usually works without if you own the folder)
             mkdir -p /var/www/html/updates/
