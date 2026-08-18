@@ -1,3 +1,6 @@
+import { useGameEngine } from './game/engine/useGameEngine';
+import { useGameStore } from './state/gameStore';
+import { GameScreen } from './screens/GameScreen';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -106,92 +109,54 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Settings
-  const [settings, setSettings] = useState<GameSettings>({
-    maxOvers: 5,
-    maxWickets: 10,
-    mode: 'VS_AI',
-    soundEnabled: true,
-    aiDifficulty: 'MEDIUM',
-  });
-
-  // Multiplayer State
-  const [multiplayerRoomId, setMultiplayerRoomId] = useState<string | null>(null);
-  const [multiplayerOpponentId, setMultiplayerOpponentId] = useState<string | null>(null);
-  const [myPlayerId, setMyPlayerId] = useState<string>('YOU');
-  const [opponentPlayerId, setOpponentPlayerId] = useState<string>('AI');
-
-  // Game Modals
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isRulesOpen, setIsRulesOpen] = useState(false);
-
-  // Player States matching screenshot initial state
-  const [youState, setYouState] = useState<PlayerState>({
-    name: 'YOU',
-    avatar: 'helmet',
-    runs: 12,
-    wickets: 1,
-    overs: 0.5,
-    ballsBowled: 5,
-    history: [
-      { id: '1', overBall: '0.1', player: 'YOU', runs: 4, isWicket: false, isWide: false, isPowerplay: true, isFreeHit: false, tileLabel: '4 PP', commentary: 'Smashed away through covers for FOUR!' },
-      { id: '2', overBall: '0.2', player: 'YOU', runs: 2, isWicket: false, isWide: false, isPowerplay: true, isFreeHit: false, tileLabel: '2 PP', commentary: 'Worked into the gap for two runs.' },
-      { id: '3', overBall: '0.3', player: 'YOU', runs: 4, isWicket: false, isWide: false, isPowerplay: true, isFreeHit: false, tileLabel: '4 PP', commentary: 'Cracked away for FOUR!' },
-      { id: '4', overBall: '0.4', player: 'YOU', runs: 0, isWicket: true, isWide: false, isPowerplay: true, isFreeHit: false, tileLabel: 'W', commentary: 'OUT! Caught at mid-on!' },
-      { id: '5', overBall: '0.5', player: 'YOU', runs: 2, isWicket: false, isWide: false, isPowerplay: true, isFreeHit: false, tileLabel: '2 PP', commentary: 'Worked away for one. Powerplay doubles it!' },
-    ],
-    fourCount: 2,
-    sixCount: 0,
-    dotsCount: 0,
-  });
-
-  const [aiState, setAiState] = useState<PlayerState>({
-    name: 'AI',
-    avatar: 'robot',
-    runs: 0,
-    wickets: 0,
-    overs: 0.0,
-    ballsBowled: 0,
-    history: [],
-    fourCount: 0,
-    sixCount: 0,
-    dotsCount: 0,
-  });
-
-  // Game Engine State
-  const [activeScreen, setActiveScreen] = useState<'LOBBY' | 'TOSS' | 'GAME'>('LOBBY');
-  const [tossCallerId, setTossCallerId] = useState<string>('');
-  const [multiplayerOpponentName, setMultiplayerOpponentName] = useState<string>('');
-  const [isBotToss, setIsBotToss] = useState<boolean>(false);
-  const [selectedGround, setSelectedGround] = useState<Ground>(STADIUMS[0]);
-  const [currentStrike, setCurrentStrike] = useState<'YOU' | 'AI'>('YOU');
-  const [phase, setPhase] = useState<GamePhase>('INNINGS_1');
-  const [targetRuns, setTargetRuns] = useState<number | undefined>(undefined);
-  const [youTileIndex, setYouTileIndex] = useState<number>(0);
-  const [aiTileIndex, setAiTileIndex] = useState<number>(0);
-  const [selectedTactic, setSelectedTactic] = useState<TacticMode>('ROTATE');
-  const [emojiEvent, setEmojiEvent] = useState<{player: 'YOU'|'AI', emoji: string, id: number} | null>(null);
   
       
-  const [isFreeHit, setIsFreeHit] = useState<boolean>(false);
-  const [myTurnAction, setMyTurnAction] = useState<{tactic: TacticMode, roll: number, catchRand?: number} | null>(null);
-  const [opponentTurnAction, setOpponentTurnAction] = useState<{tactic: TacticMode, roll: number, catchRand?: number} | null>(null);
-  const [isRolling, setIsRolling] = useState<boolean>(false);
-  const [turnTimer, setTurnTimer] = useState<number>(10);
 
 
   // Dice Modal state
-  const [showDiceModal, setShowDiceModal] = useState<boolean>(false);
-  const [diceVal, setDiceVal] = useState<number>(3);
-  const [landedTileInfo, setLandedTileInfo] = useState<BoardTile | null>(null);
 
   // Commentary text
-  const [commentaryMsg, setCommentaryMsg] = useState<string>('You worked away for one.');
-  const [commentarySubMsg, setCommentarySubMsg] = useState<string>('Powerplay doubles it!');
 
   // Player Profile State (Firestore Sync)
   const { profile, updateProfile, profileLoading } = useProfile(user);
+
+  const {
+    settings, setSettings,
+    activeScreen, setActiveScreen,
+    phase, setPhase,
+    selectedGround, setSelectedGround,
+    currentStrike, setCurrentStrike,
+    targetRuns, setTargetRuns,
+    youState, setYouState,
+    aiState, setAiState,
+    selectedTactic, setSelectedTactic,
+    youTileIndex, setYouTileIndex,
+    aiTileIndex, setAiTileIndex,
+    isFreeHit, setIsFreeHit,
+    multiplayerRoomId, setMultiplayerRoomId,
+    myPlayerId, setMyPlayerId,
+    opponentPlayerId, setOpponentPlayerId,
+    multiplayerOpponentName, setMultiplayerOpponentName,
+    isMenuOpen, setIsMenuOpen,
+    isSettingsOpen, setIsSettingsOpen,
+    isRulesOpen, setIsRulesOpen,
+    tossCallerId, setTossCallerId,
+    isBotToss, setIsBotToss,
+    emojiEvent, setEmojiEvent,
+    myTurnAction, setMyTurnAction,
+    opponentTurnAction, setOpponentTurnAction,
+    isRolling, setIsRolling,
+    turnTimer, setTurnTimer,
+    showDiceModal, setShowDiceModal,
+    diceVal, setDiceVal,
+    landedTileInfo, setLandedTileInfo,
+    commentaryMsg, setCommentaryMsg,
+    commentarySubMsg, setCommentarySubMsg,
+    showDailyReward, setShowDailyReward,
+    dailyRewardAmount, setDailyRewardAmount
+  } = useGameStore();
+
+  const { handleActionSubmit, isCurrentPowerplay } = useGameEngine(API_URL, updateProfile, profile);
   
   const coins = profile?.coins || 0;
   const xp = profile?.xp || 0;
@@ -220,8 +185,6 @@ export default function App() {
     updateProfile({ lastLoginDate: newVal });
   };
 
-  const [showDailyReward, setShowDailyReward] = useState<boolean>(false);
-  const [dailyRewardAmount, setDailyRewardAmount] = useState<number>(0);
 
   // Daily Reward Logic
   useEffect(() => {
@@ -229,7 +192,7 @@ export default function App() {
 
     const today = new Date().toDateString();
     // Only claim if it's not today. Empty string counts as 'never claimed'.
-    if (lastLoginDate !== today) {
+    if (lastLoginDate !== today && !showDailyReward) {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       
@@ -242,17 +205,30 @@ export default function App() {
       
       const reward = 50 + (Math.min(newStreak, 7) * 10); // Cap multiplier at 7 days
       setDailyRewardAmount(reward);
-      setDailyStreak(newStreak);
-      setLastLoginDate(today);
       setShowDailyReward(true);
-      
-      // Persisted via updateProfile
     }
-  }, [lastLoginDate, dailyStreak, profileLoading, user]);
+  }, [lastLoginDate, dailyStreak, profileLoading, user, showDailyReward, setShowDailyReward]);
 
   const claimDailyReward = () => {
     soundFx.playPowerplayChime();
-    setCoins(c => c + dailyRewardAmount);
+    
+    const today = new Date().toDateString();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    let newStreak = dailyStreak;
+    if (lastLoginDate === yesterday.toDateString()) {
+      newStreak += 1;
+    } else {
+      newStreak = 1;
+    }
+
+    updateProfile({
+      coins: coins + dailyRewardAmount,
+      dailyStreak: newStreak,
+      lastLoginDate: today
+    });
+    
     setShowDailyReward(false);
   };
 
@@ -270,12 +246,6 @@ export default function App() {
   };
 
   // Helper: check powerplay status (Overs 1 & 2 are powerplays)
-  const isPowerplayActive = (balls: number) => {
-    return balls < 12; // first 2 overs
-  };
-
-  const activePlayer = currentStrike === 'YOU' ? youState : aiState;
-  const isCurrentPowerplay = isPowerplayActive(activePlayer.ballsBowled);
 
   // Restart Fresh Match
   
@@ -345,392 +315,6 @@ export default function App() {
   const isUserFinished = youState.ballsBowled >= settings.maxOvers * 6 || youState.wickets >= settings.maxWickets;
   const isAiFinished = aiState.ballsBowled >= settings.maxOvers * 6 || aiState.wickets >= settings.maxWickets;
 
-  // Submit Action (Dual-Roll System)
-  const handleActionSubmit = useCallback(async (tactic?: TacticMode) => {
-    if (isRolling || phase === 'MATCH_OVER') return;
-    
-    // Prevent multiple submissions
-    if (currentStrike === 'YOU' && myTurnAction) return;
-    if (currentStrike === 'AI' && opponentTurnAction) return;
-    
-    // Check if user is allowed to act
-    if (settings.mode !== 'PASS_AND_PLAY' && currentStrike !== 'YOU') return;
-    
-    soundFx.playClick();
-    const activeTactic = tactic || selectedTactic;
-    
-    try {
-      const response = await fetch(`${API_URL}/api/roll`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tactic: activeTactic })
-      });
-      const data = await response.json();
-      
-      const action = { tactic: activeTactic, roll: data.roll, catchRand: data.catchRand };
-      
-      if (currentStrike === 'YOU') {
-        setMyTurnAction(action);
-        if (settings.mode === 'MULTIPLAYER' && multiplayerRoomId) {
-          socketService.emit('player_action', {
-            roomId: multiplayerRoomId,
-            action: 'SUBMIT_TURN',
-            payload: action
-          });
-        }
-      } else {
-        // It's Player 2 in Pass & Play
-        setOpponentTurnAction(action);
-      }
-    } catch (err) {
-      console.error('Failed to fetch roll', err);
-    }
-  }, [isRolling, phase, myTurnAction, opponentTurnAction, selectedTactic, settings.mode, multiplayerRoomId, currentStrike]);
-
-  // Handle AI turn action
-  useEffect(() => {
-    if (activeScreen === 'GAME' && phase !== 'MATCH_OVER' && settings.mode === 'VS_AI' && !opponentTurnAction) {
-      if (currentStrike !== 'AI') return; // Only AI batter takes action
-      
-      const timer = setTimeout(async () => {
-        const tactics: TacticMode[] = ['DEFEND', 'ROTATE', 'ATTACK'];
-        let aiTactic: TacticMode = tactics[Math.floor(Math.random() * tactics.length)];
-        
-        try {
-          const response = await fetch(`${API_URL}/api/roll`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tactic: aiTactic })
-          });
-          const data = await response.json();
-          setOpponentTurnAction({ tactic: aiTactic, roll: data.roll, catchRand: data.catchRand });
-        } catch (err) {
-          console.error('Failed to fetch AI roll', err);
-        }
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [activeScreen, phase, settings.mode, currentStrike, opponentTurnAction]);
-
-  // Turn timer countdown and auto-roll
-  useEffect(() => {
-    if (activeScreen !== 'GAME' || phase === 'MATCH_OVER' || isRolling) return;
-    
-    const batterAction = currentStrike === 'YOU' ? myTurnAction : opponentTurnAction;
-    if (batterAction) return; // Stop timer if batter has acted
-
-    const timer = setInterval(() => {
-      setTurnTimer(prev => prev - 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [activeScreen, phase, isRolling, myTurnAction, opponentTurnAction, currentStrike]);
-
-  // Handle timer actions
-  useEffect(() => {
-    if (activeScreen !== 'GAME' || phase === 'MATCH_OVER' || isRolling) return;
-    
-    if (turnTimer === 0 && currentStrike === 'YOU' && !myTurnAction) {
-       handleActionSubmit('ROTATE');
-    } else if (turnTimer < -4 && settings.mode === 'MULTIPLAYER' && currentStrike !== 'YOU' && !opponentTurnAction) {
-       setSettings(s => ({ ...s, mode: 'VS_AI' }));
-       setCommentaryMsg('Opponent timed out.');
-       setCommentarySubMsg('AI took over!');
-       setTurnTimer(0);
-    }
-  }, [turnTimer, myTurnAction, opponentTurnAction, activeScreen, phase, isRolling, currentStrike, handleActionSubmit, settings.mode]);
-
-  // Resolve action when ready
-  useEffect(() => {
-    const batterAction = currentStrike === 'YOU' ? myTurnAction : opponentTurnAction;
-    
-    if (batterAction && !isRolling && activeScreen === 'GAME' && phase !== 'MATCH_OVER') {
-      setIsRolling(true);
-      soundFx.playDiceRoll();
-      
-      const combinedRoll = batterAction.roll;
-      setDiceVal(combinedRoll);
-      
-      const isUser = currentStrike === 'YOU';
-      const currentIndex = isUser ? youTileIndex : aiTileIndex;
-      let newIndex = (currentIndex + combinedRoll) % 32;
-      
-      const landedTile = BOARD_TILES.find(t => t.id === newIndex) || BOARD_TILES[0];
-      setLandedTileInfo(landedTile);
-      setShowDiceModal(true);
-      
-      setTimeout(() => {
-        setShowDiceModal(false);
-        if (isUser) setYouTileIndex(newIndex);
-        else setAiTileIndex(newIndex);
-
-        resolveOutcome(landedTile, combinedRoll, batterAction.tactic, batterAction.catchRand || Math.random(), isUser);
-        setMyTurnAction(null);
-        setOpponentTurnAction(null);
-        setTurnTimer(20);
-        setIsRolling(false);
-      }, 2000); 
-    }
-  }, [myTurnAction, opponentTurnAction, isRolling, activeScreen, phase, youTileIndex, aiTileIndex, currentStrike]);
-
-// Resolve outcome of the landed tile
-  const resolveOutcome = (tile: BoardTile, rollVal: number, activeTactic: TacticMode, catchRand: number = Math.random(), isUser: boolean) => {
-    let runsEarned = 0;
-    let isWicketOut = false;
-    let isWide = false;
-    let nextFreeHit = false;
-    let cMsg = '';
-    let cSub = '';
-
-    const isBattingUser = isUser;
-    const currentPlayerState = isUser ? youState : aiState;
-    const powerplayNow = isPowerplayActive(currentPlayerState.ballsBowled);
-
-    switch (tile.type) {
-      case 'START':
-        cMsg = `${currentPlayerState.name} is at the start.`;
-        soundFx.playBatHit(false);
-        break;
-      case 'RUN_1':
-        runsEarned = 1;
-        if (powerplayNow) {
-          runsEarned *= 2;
-          cSub = 'Powerplay doubles it! (+2 runs)';
-        }
-        cMsg = `${currentPlayerState.name} worked the ball away for ${runsEarned} run${runsEarned > 1 ? 's' : ''}.`;
-        soundFx.playBatHit(false);
-        break;
-
-      case 'RUN_2':
-        runsEarned = 2;
-        if (powerplayNow) {
-          runsEarned *= 2;
-          cSub = 'Powerplay doubles it! (+4 runs)';
-        }
-        cMsg = `Nicely placed into deep mid-wicket for ${runsEarned} runs!`;
-        soundFx.playBatHit(false);
-        break;
-
-      case 'RUN_3':
-        runsEarned = 3;
-        if (powerplayNow) {
-          runsEarned *= 2;
-          cSub = 'Powerplay doubles it! (+6 runs)';
-        }
-        cMsg = `Great running between the wickets! Took ${runsEarned} runs!`;
-        soundFx.playBatHit(false);
-        break;
-
-      case 'RUN_4':
-        runsEarned = 4;
-        if (powerplayNow) {
-          runsEarned *= 2;
-          cSub = 'Powerplay doubles it! (+8 runs)';
-        }
-        cMsg = `SMASHED AWAY FOR FOUR! Pure timing!`;
-        soundFx.playBatHit(true);
-        break;
-
-      case 'RUN_6':
-        runsEarned = 6;
-        if (powerplayNow) {
-          runsEarned *= 2;
-          cSub = 'Powerplay doubles it! (+12 runs)';
-        }
-        cMsg = `MASSIVE HIT OVER THE BOUNDARY FOR SIX! What a shot!`;
-        soundFx.playBatHit(true);
-        break;
-
-      case 'DOT':
-        runsEarned = 0;
-        cMsg = `Dot ball. Defended cleanly to the fielder.`;
-        soundFx.playBatHit(false);
-        break;
-
-      case 'WICKET':
-        if (isFreeHit) {
-          runsEarned = 1;
-          cMsg = `SURVIVED FREE HIT! Wicket attempt negated! (+1 run)`;
-          cSub = `Free Hit protected your wicket!`;
-          soundFx.playBatHit(false);
-        } else {
-          isWicketOut = true;
-          cMsg = `OUT! Clean bowled / caught in the deep! Wicket falls!`;
-          soundFx.playWicket();
-        }
-        break;
-
-      case 'CATCH':
-        if (isFreeHit) {
-          runsEarned = 2;
-          cMsg = `Free Hit active! Dropped in the deep for 2 runs!`;
-          soundFx.playBatHit(false);
-        } else {
-          // 50% catch probability unless DEFEND tactic
-          const catchProb = activeTactic === 'DEFEND' ? 0.2 : activeTactic === 'ATTACK' ? 0.7 : 0.4;
-          if (catchRand < catchProb) {
-            isWicketOut = true;
-            cMsg = `OUT! High ball taken cleanly by the fielder!`;
-            soundFx.playWicket();
-          } else {
-            runsEarned = 2;
-            cMsg = `DROPPED! Fielder spills the catch! Scammed 2 runs!`;
-            cSub = `Lucky escape!`;
-            soundFx.playBatHit(false);
-          }
-        }
-        break;
-
-      case 'WIDE':
-        runsEarned = 1;
-        isWide = true;
-        nextFreeHit = true;
-        cMsg = `WIDE BALL! Extra run awarded + Extra delivery!`;
-        cSub = `Free Hit awarded for next ball!`;
-        soundFx.playBatHit(false);
-        break;
-
-      case 'FREE_HIT':
-        runsEarned = 1;
-        nextFreeHit = true;
-        cMsg = `Landed on FREE HIT! Next roll cannot result in a wicket!`;
-        cSub = `Free Hit Shield Active!`;
-        soundFx.playBatHit(false);
-        break;
-
-      case 'POWER_ROLL':
-        runsEarned = 3;
-        cMsg = `POWER ROLL! Accelerated down the track for 3 runs!`;
-        cSub = `Bonus Momentum!`;
-        soundFx.playPowerplayChime();
-        break;
-
-      case 'POWER_SHOT':
-        runsEarned = 6;
-        cMsg = `POWER SHOT! Dispatched straight over long-on for SIX!`;
-        cSub = `+6 Bonus Runs!`;
-        soundFx.playPowerplayChime();
-        soundFx.playCrowdCheer(true);
-        break;
-    }
-
-    setIsFreeHit(nextFreeHit);
-    setCommentaryMsg(cMsg);
-    setCommentarySubMsg(cSub);
-
-    // Update Player Scores & Ball counts
-    updatePlayerScore(isBattingUser, runsEarned, isWicketOut, isWide, powerplayNow, tile.label, cMsg, cSub);
-  };
-
-  // Update Score and Check Innings Progress
-  const updatePlayerScore = (
-    isUser: boolean,
-    runs: number,
-    isWicket: boolean,
-    isWide: boolean,
-    isPowerplay: boolean,
-    tileLabel: string,
-    commentary: string,
-    subCommentary?: string
-  ) => {
-    
-    // Rewards System
-    if (phase !== 'MATCH_OVER') {
-      if (isUser) {
-        if (runs >= 4) {
-          setCoins(c => c + runs * 2);
-          setXp(x => x + 10);
-        } else if (runs > 0) {
-          setCoins(c => c + runs);
-          setXp(x => x + 2);
-        }
-      } else if (settings.mode === 'VS_AI') {
-        if (isWicket) {
-          setCoins(c => c + 25);
-          setXp(x => x + 30);
-        } else if (runs === 0 && !isWide) {
-          setCoins(c => c + 2);
-          setXp(x => x + 5);
-        }
-      }
-    }
-
-    const updateFn = isUser ? setYouState : setAiState;
-
-    updateFn((prev) => {
-      const newRuns = prev.runs + runs;
-      const newWickets = isWicket ? prev.wickets + 1 : prev.wickets;
-      const newLegalBalls = isWide ? prev.ballsBowled : prev.ballsBowled + 1;
-
-      const oversVal = Math.floor(newLegalBalls / 6) + (newLegalBalls % 6) / 10;
-      const overBallStr = `${Math.floor(prev.ballsBowled / 6)}.${(prev.ballsBowled % 6) + 1}`;
-
-      const newRecord: DeliveryRecord = {
-        id: Date.now().toString(),
-        overBall: overBallStr,
-        player: isUser ? 'YOU' : 'AI',
-        runs,
-        isWicket,
-        isWide,
-        isPowerplay,
-        isFreeHit,
-        tileLabel: `${tileLabel}${isPowerplay ? ' PP' : ''}`,
-        commentary,
-        subCommentary,
-      };
-
-      const newHistory = [...prev.history, newRecord];
-
-      const totalLegalBalls = settings.maxOvers * 6;
-      const isCurrentFinished = newLegalBalls >= totalLegalBalls || newWickets >= settings.maxWickets;
-      const otherState = isUser ? aiState : youState;
-      const isOtherFinished = otherState.ballsBowled >= totalLegalBalls || otherState.wickets >= settings.maxWickets;
-
-      if (isCurrentFinished && isOtherFinished) {
-        setTimeout(() => {
-          setPhase('MATCH_OVER');
-          const userFinalRuns = isUser ? newRuns : youState.runs;
-          const aiFinalRuns = !isUser ? newRuns : aiState.runs;
-          const userWon = userFinalRuns >= aiFinalRuns;
-          
-          if (userWon) {
-            setCoins(c => c + 150);
-            setXp(x => x + 200);
-          } else {
-            setCoins(c => c + 50);
-            setXp(x => x + 50);
-          }
-          setStats(s => ({
-            ...s,
-            matchesPlayed: s.matchesPlayed + 1,
-            matchesWon: s.matchesWon + (userWon ? 1 : 0),
-            totalRuns: s.totalRuns + userFinalRuns,
-            totalWickets: s.totalWickets + (isUser ? newWickets : youState.wickets),
-            highestScore: Math.max(s.highestScore, userFinalRuns)
-          }));
-        }, 1000);
-      } else {
-        setTimeout(() => {
-           if (!isOtherFinished && (!isWide || isCurrentFinished)) {
-              setCurrentStrike(isUser ? 'AI' : 'YOU');
-           } else if (isCurrentFinished && !isOtherFinished) {
-              setCurrentStrike(isUser ? 'AI' : 'YOU');
-           }
-        }, 500);
-      }
-
-      return {
-        ...prev,
-        runs: newRuns,
-        wickets: newWickets,
-        ballsBowled: newLegalBalls,
-        overs: oversVal,
-        history: newHistory,
-        fourCount: runs === 4 || runs === 8 ? prev.fourCount + 1 : prev.fourCount,
-        sixCount: runs === 6 || runs === 12 ? prev.sixCount + 1 : prev.sixCount,
-        dotsCount: runs === 0 ? prev.dotsCount + 1 : prev.dotsCount,
-      };
-    });
-  };
 
   // Multiplayer Opponent Action Listener
   useEffect(() => {
@@ -883,112 +467,46 @@ export default function App() {
           playerAvatar={profile?.photoURL || user?.photoURL || ''}
         />
       ) : (
-        <div className="relative z-10 flex-1 flex flex-col w-full max-w-2xl mx-auto pb-4 h-full overflow-hidden">
-          {/* Header */}
-          <Header
-            onOpenMenu={() => {
-               setIsMenuOpen(true);
-               // Add exit to lobby option in settings/menu in future, or let header handle it
-            }}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-            onOpenRules={() => setIsRulesOpen(true)}
-            isMuted={!settings.soundEnabled}
-            onToggleMute={handleToggleMute}
-            coins={coins}
-            playerLevel={playerLevel}
-            xpProgress={xpProgress}
-            selectedGround={selectedGround}
-          />
-
-          <div className="flex-1 min-h-0 flex flex-col">
-          {/* Scoreboard */}
-          <MatchPlayersBanner youState={youState} aiState={aiState} emojiEvent={emojiEvent} playerLevel={playerLevel} opponentLevel={settings.mode === 'MULTIPLAYER' ? 5 : 10} />
-          <Scoreboard
-            youState={youState}
-            aiState={aiState}
-            isPowerplay={isCurrentPowerplay}
-            currentStrike={currentStrike}
-            turnTimer={activeScreen === 'GAME' && phase !== 'MATCH_OVER' && !isRolling ? turnTimer : undefined}
-          />
-
-          {/* Center Circular Cricket Board */}
-          <div className="flex-1 min-h-0 flex items-center justify-center">
-          <CricketBoard
-            youTileIndex={youTileIndex}
-            aiTileIndex={aiTileIndex}
-            youIsRolling={isRolling && currentStrike === 'YOU'}
-            aiIsRolling={isRolling && currentStrike !== 'YOU'}
-            ground={selectedGround}
-          />
-          </div>
-
-          
-
-          </div>
-          {/* Action Controls (Defend, Rotate, Attack, ROLL) */}
-          <div className="flex flex-col items-center">
-            <ActionControls
-              selectedTactic={selectedTactic}
-              onSelectTactic={setSelectedTactic}
-              onRoll={() => handleActionSubmit()}
-              isRolling={isRolling || (currentStrike === 'YOU' ? myTurnAction !== null : opponentTurnAction !== null)}
-              disabled={phase === 'MATCH_OVER' || (settings.mode !== 'PASS_AND_PLAY' && currentStrike !== 'YOU')}
-              showEmoji={!!multiplayerRoomId}
-              isBatting={true}
-              onSendEmoji={(emoji) => {
-                if (multiplayerRoomId) {
-                  socketService.emit('player_action', {
-                    roomId: multiplayerRoomId,
-                    action: 'EMOJI',
-                    payload: { emoji }
-                  });
-                  setEmojiEvent({ player: 'YOU', emoji, id: Date.now() });
-                }
-              }}
-            />
-          </div>
-        </div>
+        <GameScreen
+          settings={settings}
+          coins={coins}
+          playerLevel={playerLevel}
+          xpProgress={xpProgress}
+          selectedGround={selectedGround}
+          isMenuOpen={isMenuOpen}
+          setIsMenuOpen={setIsMenuOpen}
+          isSettingsOpen={isSettingsOpen}
+          setIsSettingsOpen={setIsSettingsOpen}
+          isRulesOpen={isRulesOpen}
+          setIsRulesOpen={setIsRulesOpen}
+          handleToggleMute={handleToggleMute}
+          youState={youState}
+          aiState={aiState}
+          emojiEvent={emojiEvent}
+          isCurrentPowerplay={isCurrentPowerplay}
+          currentStrike={currentStrike}
+          turnTimer={turnTimer}
+          activeScreen={activeScreen}
+          phase={phase}
+          isRolling={isRolling}
+          youTileIndex={youTileIndex}
+          aiTileIndex={aiTileIndex}
+          selectedTactic={selectedTactic}
+          setSelectedTactic={setSelectedTactic}
+          handleActionSubmit={handleActionSubmit}
+          myTurnAction={myTurnAction}
+          opponentTurnAction={opponentTurnAction}
+          multiplayerRoomId={multiplayerRoomId}
+          showDiceModal={showDiceModal}
+          diceVal={diceVal}
+          landedTileInfo={landedTileInfo}
+          handleRestartMatch={handleRestartMatch}
+          handleExitToLobby={handleExitToLobby}
+          targetRuns={targetRuns}
+          setSettings={setSettings}
+          setEmojiEvent={setEmojiEvent}
+        />
       )}
-
-      {/* Animated Roll Modal Overlay */}
-      <DiceModal
-        isOpen={showDiceModal}
-        diceValue={diceVal}
-        landedTile={landedTileInfo}
-        tactic={selectedTactic}
-      />
-
-      {/* Rules Modal */}
-      <RulesModal
-        isOpen={isRulesOpen}
-        onClose={() => setIsRulesOpen(false)}
-      />
-
-      {/* Settings & Options Drawer */}
-      <SettingsDrawer
-        isOpen={isSettingsOpen || isMenuOpen}
-        onClose={() => {
-          setIsSettingsOpen(false);
-          setIsMenuOpen(false);
-        }}
-        settings={settings}
-        onUpdateSettings={(newSet) => setSettings((prev) => ({ ...prev, ...newSet }))}
-        onRestartMatch={handleRestartMatch}
-        onExitToLobby={handleExitToLobby}
-        isMultiplayer={!!multiplayerRoomId}
-        showLogout={activeScreen === 'LOBBY'}
-        showExitToLobby={activeScreen === 'GAME'}
-      />
-
-      {/* Match End Summary Modal */}
-      <MatchEndModal
-        isOpen={phase === 'MATCH_OVER' && activeScreen === 'GAME'}
-        youState={youState}
-        aiState={aiState}
-        targetRuns={targetRuns}
-        onPlayAgain={multiplayerRoomId ? undefined : handleRestartMatch}
-        onExitToLobby={handleExitToLobby}
-      />
     </div>
   );
 }
