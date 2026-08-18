@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useGameStore } from '../../state/gameStore';
 import { soundFx } from '../../utils/audio';
-import { socketService } from '../../utils/socket';
+import { multiplayerController } from '../multiplayer/multiplayerController';
 import { BOARD_TILES } from '../../utils/boardData';
 import { BoardTile, TacticMode, DeliveryRecord } from '../../types';
 
@@ -76,11 +76,7 @@ export const useGameEngine = (
       if (currentStrike === 'YOU') {
         setMyTurnAction(action);
         if (settings.mode === 'MULTIPLAYER' && multiplayerRoomId) {
-          socketService.emit('player_action', {
-            roomId: multiplayerRoomId,
-            action: 'SUBMIT_TURN',
-            payload: action
-          });
+          multiplayerController.submitTurn(multiplayerRoomId, action);
         }
       } else {
         setOpponentTurnAction(action);
@@ -90,30 +86,7 @@ export const useGameEngine = (
     }
   }, [isRolling, phase, myTurnAction, opponentTurnAction, selectedTactic, settings.mode, multiplayerRoomId, currentStrike, API_URL, setMyTurnAction, setOpponentTurnAction]);
 
-  useEffect(() => {
-    if (activeScreen === 'GAME' && phase !== 'MATCH_OVER' && settings.mode === 'VS_AI' && !opponentTurnAction) {
-      if (currentStrike !== 'AI') return;
-      
-      const timer = setTimeout(async () => {
-        const tactics: TacticMode[] = ['DEFEND', 'ROTATE', 'ATTACK'];
-        let aiTactic: TacticMode = tactics[Math.floor(Math.random() * tactics.length)];
-        
-        try {
-          const response = await fetch(`${API_URL}/api/roll`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tactic: aiTactic })
-          });
-          const data = await response.json();
-          setOpponentTurnAction({ tactic: aiTactic, roll: data.roll, catchRand: data.catchRand });
-        } catch (err) {
-          console.error('Failed to fetch AI roll', err);
-        }
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [activeScreen, phase, settings.mode, currentStrike, opponentTurnAction, API_URL, setOpponentTurnAction]);
-
+  
   useEffect(() => {
     if (activeScreen !== 'GAME' || phase === 'MATCH_OVER' || isRolling) return;
     

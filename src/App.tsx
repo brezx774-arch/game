@@ -19,6 +19,8 @@ import {
 import { BOARD_TILES } from './utils/boardData';
 import { soundFx } from './utils/audio';
 import { socketService } from './utils/socket';
+import { multiplayerController } from './game/multiplayer/multiplayerController';
+import { useAiController } from './game/ai/aiController';
 
 import { Header } from './components/Header';
 import { Scoreboard } from './components/Scoreboard';
@@ -119,6 +121,7 @@ export default function App() {
 
   // Player Profile State (Firestore Sync)
   const { profile, updateProfile, profileLoading } = useProfile(user);
+  useAiController(API_URL);
 
   const {
     settings, setSettings,
@@ -254,12 +257,8 @@ export default function App() {
     setPhase('MATCH_OVER');
             
     if (settings.mode === 'MULTIPLAYER' && multiplayerRoomId) {
-      socketService.emit('player_action', {
-        roomId: multiplayerRoomId,
-        action: 'LEAVE',
-        payload: {}
-      });
-      socketService.emit('cancel_matchmaking');
+      multiplayerController.leaveRoom(multiplayerRoomId);
+      multiplayerController.cancelMatchmaking();
     }
   };
 

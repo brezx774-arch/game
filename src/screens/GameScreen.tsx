@@ -9,7 +9,7 @@ import { RulesModal } from '../components/RulesModal';
 import { SettingsDrawer } from '../components/SettingsDrawer';
 import { MatchEndModal } from '../components/MatchEndModal';
 import { PlayerState, GamePhase, GameSettings, Ground, BoardTile, TacticMode } from '../types';
-import { socketService } from '../utils/socket';
+import { multiplayerController } from '../game/multiplayer/multiplayerController';
 
 export interface GameScreenProps {
   settings: GameSettings;
@@ -108,11 +108,7 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
             isBatting={true}
             onSendEmoji={(emoji) => {
               if (props.multiplayerRoomId) {
-                socketService.emit('player_action', {
-                  roomId: props.multiplayerRoomId,
-                  action: 'EMOJI',
-                  payload: { emoji }
-                });
+                multiplayerController.sendEmoji(props.multiplayerRoomId, emoji);
                 props.setEmojiEvent({ player: 'YOU', emoji, id: Date.now() });
               }
             }}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { socketService } from '../utils/socket';
+import { multiplayerController } from '../game/multiplayer/multiplayerController';
 
 interface TossScreenProps {
   roomId?: string;
@@ -80,11 +81,7 @@ export const TossScreen: React.FC<TossScreenProps> = ({
     setWinnerId(theWinner);
     
     if (mode === 'MULTIPLAYER' && !isBotMatch && !isBot) {
-      socketService.emit('player_action', {
-        roomId: roomId,
-        action: 'TOSS_RESULT',
-        payload: { choice: selectedChoice, result, winnerId: theWinner }
-      });
+      multiplayerController.tossResult(roomId!, selectedChoice, result, theWinner!);
     }
 
     setTossState('FLIPPING');

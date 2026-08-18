@@ -3,6 +3,7 @@ import { Play, Settings, Trophy, User, Coins, Star, Store, Home, Medal, Activity
 import { motion, AnimatePresence } from 'motion/react';
 import { soundFx } from '../utils/audio';
 import { socketService } from '../utils/socket';
+import { multiplayerController } from '../game/multiplayer/multiplayerController';
 import { LeaderboardScreen } from '../components/LeaderboardScreen';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
@@ -390,7 +391,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                       onClick={() => {
                         setIsMatchmaking(false);
                         setCreatedRoomCode(null);
-                        socketService.emit('cancel_matchmaking');
+                        multiplayerController.cancelMatchmaking();
                       }}
                       className="mt-4 z-10 text-xs text-blue-300/60 hover:text-blue-200 underline underline-offset-4"
                     >
@@ -536,8 +537,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                           onClick={() => {
                             soundFx.playClick();
                             setIsMatchmaking(true);
-                            socketService.connect();
-                            socketService.emit('join_matchmaking');
+                            multiplayerController.joinMatchmaking();
                           }}
                           className="w-full h-14 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-700 border-b-[6px] border-blue-900 text-white flex items-center justify-center gap-3 relative overflow-hidden shadow-lg cursor-pointer"
                         >
@@ -553,8 +553,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                             onClick={() => {
                               soundFx.playClick();
                               setIsMatchmaking(true);
-                              socketService.connect();
-                              socketService.emit('create_room', { name: playerName, avatar: playerAvatar });
+                              multiplayerController.createRoom(playerName || 'Player', playerAvatar || '');
                             }}
                             className="h-14 rounded-2xl bg-gradient-to-b from-purple-500 to-purple-700 border-b-[6px] border-purple-900 text-white flex items-center justify-center gap-2 relative overflow-hidden shadow-lg w-full cursor-pointer"
                           >
@@ -575,8 +574,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                                   if (code.length === 4) {
                                     soundFx.playClick();
                                     setIsMatchmaking(true);
-                                    socketService.connect();
-                                    socketService.emit('join_room', { roomCode: code });
+                                    multiplayerController.joinRoom(code);
                                   }
                                 }
                               }}
@@ -590,8 +588,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                                 if (code && code.length === 4) {
                                   soundFx.playClick();
                                   setIsMatchmaking(true);
-                                  socketService.connect();
-                                  socketService.emit('join_room', { roomCode: code });
+                                  multiplayerController.joinRoom(code);
                                 }
                               }}
                               className="h-full px-6 rounded-2xl bg-stone-800 text-stone-200 font-black text-sm uppercase tracking-wider border-b-[4px] border-stone-950 flex items-center justify-center shadow-lg cursor-pointer"
